@@ -1,12 +1,12 @@
-import React from 'react'
 import {
-	Settings,
-	MoreHorizontal,
-	MessageCircle,
-	Repeat2,
 	Heart,
+	MessageCircle,
+	MoreHorizontal,
+	Repeat2,
+	Settings,
 	Share,
 } from 'lucide-react'
+import React from 'react'
 
 const Bookmarks = () => {
 	const bookmarks = [

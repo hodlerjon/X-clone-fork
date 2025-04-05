@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import ForYouContent from './ForYouContent'
 import FollowingContent from './FollowContent'
-import Explore from '../pages/Explore'
 const MainContent = () => {
 	const [activeTab, setActiveTab] = useState('For you')
 
@@ -39,7 +38,6 @@ const MainContent = () => {
 			<div className='min-h-screen'>
 				{activeTab === 'For you' ? <ForYouContent /> : <FollowingContent />}
 			</div>
-			{/* <Explore></Explore> */}
 		</div>
 	)
 }

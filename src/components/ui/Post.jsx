@@ -2,21 +2,6 @@ import React, { useState } from 'react'
 import { Icon } from '../layout/Icons'
 
 const Post = ({ username, handle, time, content, avatarUrl }) => {
-	const [isLiked, setIsLiked] = useState(false)
-	const [isRetweeted, setIsRetweeted] = useState(false)
-	const [likes, setLikes] = useState(348)
-	const [retweets, setRetweets] = useState(12)
-
-	const handleLike = () => {
-		setIsLiked(!isLiked)
-		setLikes(isLiked ? likes - 1 : likes + 1)
-	}
-
-	const handleRetweet = () => {
-		setIsRetweeted(!isRetweeted)
-		setRetweets(isRetweeted ? retweets - 1 : retweets + 1)
-	}
-
 	return (
 		<div className='p-4 border-b border-gray-800 '>
 			<div className='flex space-x-4'>
