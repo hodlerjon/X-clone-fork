@@ -14,7 +14,7 @@ function App() {
 				<main className='flex-1'>
 					<Routes>
 						<Route path='/' element={<XHomepage />} />
-						<Route path='/profile' element={<Profile />} />
+						<Route path='/profile/*' element={<Profile />} />
 						<Route path='/explore/*' element={<Explore />} />
 						<Route path='/notifications/*' element={<Notifications />} />
 					</Routes>
