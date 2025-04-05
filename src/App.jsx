@@ -7,6 +7,7 @@ import Explore from './components/pages/Explore'
 import Notifications from './components/pages/Notifications'
 import Profile from './components/pages/Profile'
 import Messages from './components/pages/Messages'
+import Bookmarks from './components/pages/Bookmarks'
 
 function App() {
 	return (
@@ -20,6 +21,7 @@ function App() {
 						<Route path='/explore/*' element={<Explore />} />
 						<Route path='/notifications/*' element={<Notifications />} />
 						<Route path='/messages' element={<Messages />} />
+						<Route path='/bookmarks' element={<Bookmarks />} />
 					</Routes>
 				</main>
 				<RightSidebar />
