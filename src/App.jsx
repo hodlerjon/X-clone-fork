@@ -6,6 +6,8 @@ import XHomepage from './components/pages/Xhomepage'
 import Explore from './components/pages/Explore'
 import Notifications from './components/pages/Notifications'
 import Profile from './components/pages/Profile'
+import Messages from './components/pages/Messages'
+
 function App() {
 	return (
 		<Router>
@@ -17,6 +19,7 @@ function App() {
 						<Route path='/profile/*' element={<Profile />} />
 						<Route path='/explore/*' element={<Explore />} />
 						<Route path='/notifications/*' element={<Notifications />} />
+						<Route path='/messages' element={<Messages />} />
 					</Routes>
 				</main>
 				<RightSidebar />
