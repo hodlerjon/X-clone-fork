@@ -14,7 +14,7 @@ A Twitter/X clone project built with modern web technologies.
 
 - Frontend: React.js
 - Backend: Node.js
-- Database: MongoDB
+- Database: Postgress
 - Real-time: Socket.io
 
 ## Getting Started
