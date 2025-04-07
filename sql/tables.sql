@@ -56,7 +56,7 @@ CREATE TABLE views (
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     tweet_id INTEGER NOT NULL REFERENCES tweets(id) ON DELETE CASCADE,
     viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    -- UNIQUE (user_id, tweet_id) -- multi view off qilish uchun
+    -- UNIQUE (user_id, tweet_id) -- multi view off qilish uchun.
 );
 
 
