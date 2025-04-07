@@ -37,4 +37,5 @@ VALUES
 (2, 'Har bir kod satri tajriba.', NULL, '2025-03-26 13:15:00'),
 (3, 'Bugun test yozishni o‘rganayapman.', NULL, '2025-03-27 17:00:00'),
 (4, 'Fikrlarimni kod bilan ifoda etaman.', NULL, '2025-03-28 21:10:00'),
-(5, 'Yangi frameworkni sinab ko‘rdim.', NULL, '2025-04-01 14:25:00');
+(5, 'Yangi frameworkni sinab ko‘rdim.', NULL, '2025-04-01 14:25:00')
+(1, 'Tondons Team :)', NULL, '2025-04-07 22:32:27.156391');
