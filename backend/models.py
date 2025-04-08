@@ -13,7 +13,9 @@ class User(db.Model):
     profile_image_url = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    # tweets = db.relationship('Tweet', backref='user', cascade='all, delete')
+
+
+    tweets = db.relationship('Tweet', backref='user', cascade='all, delete')
     # followers = db.relationship('Follower', foreign_keys='Follower.following_id', backref='followed', cascade='all, delete')
     # following = db.relationship('Follower', foreign_keys='Follower.follower_id', backref='follower', cascade='all, delete')
     # replies = db.relationship('Reply', backref='user', cascade='all, delete')

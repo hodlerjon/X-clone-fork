@@ -1,6 +1,6 @@
 from app import app, db
 from flask import request, jsonify
-from models import Tweet
+from models import User,Tweet
 
 @app.route("/api/tweet", methods =["POST"])
 def create_tweet():
@@ -11,6 +11,11 @@ def create_tweet():
 
     if not user_id or not text_content:
         return jsonify({'status':'error', 'message':'user_id and text_content are required'})
+
+    user = User.query.filter_by(id = user_id).first()
+    if not user:
+        return jsonify({'status':'error', 'message':'user_id not available'})
+    print(user)
 
     if len(text_content) > 280:
         return jsonify({'status':'error', 'message':'text_content must be 280 characters or less'})
