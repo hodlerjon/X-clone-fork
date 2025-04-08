@@ -1,4 +1,4 @@
-from . import db
+from app import db
 from datetime import datetime
 
 
@@ -13,13 +13,13 @@ class User(db.Model):
     profile_image_url = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    tweets = db.relationship('Tweet', backref='user', cascade='all, delete')
-    followers = db.relationship('Follower', foreign_keys='Follower.following_id', backref='followed', cascade='all, delete')
-    following = db.relationship('Follower', foreign_keys='Follower.follower_id', backref='follower', cascade='all, delete')
-    replies = db.relationship('Reply', backref='user', cascade='all, delete')
-    retweets = db.relationship('Retweet', backref='user', cascade='all, delete')
-    likes = db.relationship('Like', backref='user', cascade='all, delete')
-    views = db.relationship('View', backref='user', cascade='all, delete')
+    # tweets = db.relationship('Tweet', backref='user', cascade='all, delete')
+    # followers = db.relationship('Follower', foreign_keys='Follower.following_id', backref='followed', cascade='all, delete')
+    # following = db.relationship('Follower', foreign_keys='Follower.follower_id', backref='follower', cascade='all, delete')
+    # replies = db.relationship('Reply', backref='user', cascade='all, delete')
+    # retweets = db.relationship('Retweet', backref='user', cascade='all, delete')
+    # likes = db.relationship('Like', backref='user', cascade='all, delete')
+    # views = db.relationship('View', backref='user', cascade='all, delete')
 
 
 class Tweet(db.Model):
@@ -29,14 +29,14 @@ class Tweet(db.Model):
     text_content = db.Column(db.Text, nullable=False)
     media_content = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
-    __table_args__ = (
-        db.CheckConstraint('char_length(text_content) <= 280'),
-    )
+    # __table_args__ = (
+    #     db.CheckConstraint('char_length(text_content) <= 280'),
+    # )
 
-    replies = db.relationship('Reply', backref='tweet', cascade='all, delete')
-    retweets = db.relationship('Retweet', backref='tweet', cascade='all, delete')
-    likes = db.relationship('Like', backref='tweet', cascade='all, delete')
-    views = db.relationship('View', backref='tweet', cascade='all, delete')
+    # replies = db.relationship('Reply', backref='tweet', cascade='all, delete')
+    # retweets = db.relationship('Retweet', backref='tweet', cascade='all, delete')
+    # likes = db.relationship('Like', backref='tweet', cascade='all, delete')
+    # views = db.relationship('View', backref='tweet', cascade='all, delete')
 
 
 class Follower(db.Model):
@@ -46,10 +46,10 @@ class Follower(db.Model):
     following_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     followed_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    __table_args__ = (
-        db.UniqueConstraint('follower_id', 'following_id'),
-        db.CheckConstraint('follower_id <> following_id'),
-    )
+    # __table_args__ = (
+    #     db.UniqueConstraint('follower_id', 'following_id'),
+    #     db.CheckConstraint('follower_id <> following_id'),
+    # )
 
 
 class Reply(db.Model):
@@ -61,9 +61,9 @@ class Reply(db.Model):
     media_content = db.Column(db.Text)
     replied_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    __table_args__ = (
-        db.CheckConstraint('char_length(text_content) <= 280'),
-    )
+    # __table_args__ = (
+    #     db.CheckConstraint('char_length(text_content) <= 280'),
+    # )
 
 
 class Retweet(db.Model):
@@ -73,9 +73,9 @@ class Retweet(db.Model):
     tweet_id = db.Column(db.Integer, db.ForeignKey('tweets.id', ondelete='CASCADE'), nullable=False)
     retweeted_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'tweet_id'),
-    )
+    # __table_args__ = (
+    #     db.UniqueConstraint('user_id', 'tweet_id'),
+    # )
 
 
 class Like(db.Model):
@@ -85,9 +85,9 @@ class Like(db.Model):
     tweet_id = db.Column(db.Integer, db.ForeignKey('tweets.id', ondelete='CASCADE'), nullable=False)
     liked_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    __table_args__ = (
-        db.UniqueConstraint('user_id', 'tweet_id'),
-    )
+    # __table_args__ = (
+    #     db.UniqueConstraint('user_id', 'tweet_id'),
+    # )
 
 
 class View(db.Model):

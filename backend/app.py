@@ -1,26 +1,21 @@
-from . import app,db
-from backend import request, jsonify
-from .models import Tweet
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
 
-@app.route("/compose/post", methods =["POST"])
-def create_tweet():
-    data = request.json
-    user_id = data.get("user_id")
-    text_content = data.get("text_content")
-    media_content = data.get("media_content")
 
-    if not user_id or not text_content:
-        return jsonify({'status':'error', 'message':'user_id and text_content are required'})
+app = Flask(__name__)
+CORS(app)
+# PostgreSQL URL config: (username, password, host, port, dbname)
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://username:password@localhost:5432/twitter_clone'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-    if len(text_content) > 280:
-        return jsonify({'status':'error', 'message':'text_content must be 280 characters or less'})
-    
-    tweet = Tweet(
-        user_id = user_id,
-        text_content = text_content,
-        media_content = media_content
-    )
-    db.session.add(tweet)
-    db.session.commit()
+from routes import *
+with app.app_context():
+    db.create_all()
 
-    return jsonify({'status':'success', 'message':'succesfully created post'})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
