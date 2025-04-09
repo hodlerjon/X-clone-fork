@@ -36,6 +36,26 @@ def register():
     return jsonify({'status':'success', 'message':'succesfully created account'})
 
 
+@app.route("/api/login", methods = ["POST"])
+def login():
+    data = request.json
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
+
+    if username:
+        user = User.query.filter_by(username = username).first()
+    elif email:
+        user = User.query.filter_by(email = email).first()
+    else:
+        return jsonify({'status':'error', 'message':'username or email required'})
+    
+    if user.check_password(password):
+        return jsonify({'status':'success', 'message':'succesfully logged in'})
+    else:
+        return jsonify({'status':'error', 'message':'credintials are not match'})
+
+
 @app.route("/api/tweet", methods =["POST"])
 def create_tweet():
     data = request.json
