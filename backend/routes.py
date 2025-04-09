@@ -55,7 +55,7 @@ def login():
     else:
         return jsonify({'status':'error', 'message':'credintials are not match'})
 
-
+# create tweet
 @app.route("/api/tweet", methods =["POST"])
 def create_tweet():
     data = request.json
@@ -83,3 +83,23 @@ def create_tweet():
     db.session.commit()
 
     return jsonify({'status':'success', 'message':'succesfully created post'})
+
+
+# edit tweet
+@app.route("/api/tweet/<id>", methods = ["PATCH"])
+def edit_tweet(id):
+    data = request.json
+    text_content = data.get("text_content")
+    media_content = data.get("media_content") # media link
+
+    if not text_content and not media_content:
+        return jsonify({'status':'error', 'message':'text_content or media_content are required'})
+
+    tweet = Tweet.query.filter_by(id=id).first()
+
+    tweet.text_content = text_content
+    tweet.media_content = media_content
+    db.session.commit()
+
+    return jsonify({'status':'success', 'message':'tweet updated successfully'})
+
