@@ -1,6 +1,6 @@
 from app import app, db
 from flask import request, jsonify
-from models import User,Tweet
+from models import *
 
 @app.route("/api/register", methods = ["POST"])
 def register():
@@ -83,3 +83,24 @@ def create_tweet():
     db.session.commit()
 
     return jsonify({'status':'success', 'message':'succesfully created post'})
+
+@app.route('/api/create_group', methods=['POST'])
+def create_group():
+    data = request.get_json()
+    name = data.get('name')
+    member_ids = data.get('member_ids')  # [1, 2, 3]
+
+    group = Group(name=name)
+    db.session.add(group)
+    db.session.flush()
+
+    for user_id in member_ids:
+        member = GroupMembers(user_id=user_id, group_id=group.id)
+        db.session.add(member)
+
+    db.session.commit()
+    return jsonify({'message': 'Group created', 'group_id': group.id}), 201
+from app import app, db, User
+from flask import request, jsonify
+
+
