@@ -59,8 +59,8 @@ def login():
 @app.route("/api/tweet", methods =["POST"])
 def create_tweet():
     data = request.json
-    user_id = data.get("user_id")
-    text_content = data.get("text_content")
+    user_id = data.get("user_id") # required
+    text_content = data.get("text_content") # required
     media_content = data.get("media_content")
 
     if not user_id or not text_content:
@@ -102,4 +102,16 @@ def edit_tweet(id):
     db.session.commit()
 
     return jsonify({'status':'success', 'message':'tweet updated successfully'})
+
+
+@app.route("/api/tweet/<id>", methods = ["DELETE"])
+def delete_tweet(id):
+    tweet = Tweet.query.filter_by(id=id).first()
+    if tweet:
+        db.session.delete(tweet)
+        db.session.commit()
+        return jsonify({'status':'success', 'message':'tweet deleted successfully'})
+
+    else:
+        return jsonify({'status':'error', 'message':'tweet is not available'})
 
