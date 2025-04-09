@@ -2,6 +2,8 @@ from app import app, db
 from flask import request, jsonify
 from models import User,Tweet
 
+
+# register
 @app.route("/api/register", methods = ["POST"])
 def register():
     data = request.json
@@ -36,6 +38,7 @@ def register():
     return jsonify({'status':'success', 'message':'succesfully created account'})
 
 
+# login
 @app.route("/api/login", methods = ["POST"])
 def login():
     data = request.json
@@ -104,6 +107,7 @@ def edit_tweet(id):
     return jsonify({'status':'success', 'message':'tweet updated successfully'})
 
 
+# delete tweet
 @app.route("/api/tweet/<id>", methods = ["DELETE"])
 def delete_tweet(id):
     tweet = Tweet.query.filter_by(id=id).first()
@@ -115,3 +119,16 @@ def delete_tweet(id):
     else:
         return jsonify({'status':'error', 'message':'tweet is not available'})
 
+
+# get tweets
+@app.route("/api/tweet/<id>", methods=["GET"])
+def get_tweet(id):
+    tweet = Tweet.query.filter_by(id=id).first()
+    if not tweet:
+        return jsonify({'status': 'error', 'message': 'tweet not found'})
+    return jsonify({
+        'id': tweet.id,
+        'user_id': tweet.user_id,
+        'text_content': tweet.text_content,
+        'media_content': tweet.media_content
+    })
