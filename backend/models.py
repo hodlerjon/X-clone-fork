@@ -1,6 +1,6 @@
 from app import db
 from datetime import datetime
-
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -13,9 +13,10 @@ class User(db.Model):
     profile_image_url = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-
-
     tweets = db.relationship('Tweet', backref='user', cascade='all, delete')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
     # followers = db.relationship('Follower', foreign_keys='Follower.following_id', backref='followed', cascade='all, delete')
     # following = db.relationship('Follower', foreign_keys='Follower.follower_id', backref='follower', cascade='all, delete')
     # replies = db.relationship('Reply', backref='user', cascade='all, delete')
@@ -31,9 +32,9 @@ class Tweet(db.Model):
     text_content = db.Column(db.Text, nullable=False)
     media_content = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
-    # __table_args__ = (
-    #     db.CheckConstraint('char_length(text_content) <= 280'),
-    # )
+    __table_args__ = (
+        db.CheckConstraint('char_length(text_content) <= 280'),
+    )
 
     # replies = db.relationship('Reply', backref='tweet', cascade='all, delete')
     # retweets = db.relationship('Retweet', backref='tweet', cascade='all, delete')
