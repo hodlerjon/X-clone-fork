@@ -107,3 +107,11 @@ class View(db.Model):
     # __table_args__ = (db.UniqueConstraint('user_id', 'tweet_id'),)
 
 
+class Group(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    members = db.relationship('User', secondary='group_members')
+
+class GroupMembers(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), primary_key=True)
