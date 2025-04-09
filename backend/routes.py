@@ -100,7 +100,24 @@ def create_group():
 
     db.session.commit()
     return jsonify({'message': 'Group created', 'group_id': group.id}), 201
-from app import app, db, User
-from flask import request, jsonify
+
+
+@app.route('/api/messages/<int:user_id>/<int:receiver_id>', methods=['GET'])
+def get_messages(user_id, receiver_id):
+    messages = Message.query.filter(
+        ((Message.sender_id == user_id) & (Message.receiver_id == receiver_id)) |
+        ((Message.sender_id == receiver_id) & (Message.receiver_id == user_id))
+    ).filter(Message.group_id == None).order_by(Message.timestamp.asc()).all()
+
+    return jsonify([{
+        'id': msg.id,
+        'sender_id': msg.sender_id,
+        'receiver_id': msg.receiver_id,
+        'content': msg.content,
+        'media_url': msg.media_url,
+        'timestamp': msg.timestamp.isoformat(),
+        'is_read': msg.is_read,
+        'reactions': [{'user_id': r.user_id, 'emoji': r.emoji} for r in Reaction.query.filter_by(message_id=msg.id).all()]
+    } for msg in messages if str(user_id) not in msg.deleted_for.split(',')]), 200
 
 
