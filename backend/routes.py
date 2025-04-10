@@ -16,6 +16,7 @@ def register():
     full_name = data.get("full_name")
     bio = data.get("bio")  
     profile_image_url = data.get("profile_image_url")
+
     if not username or not email or not password:
         return jsonify({'status': 'error', 'message': 'username, email, password are required'})
 
@@ -24,8 +25,25 @@ def register():
         return jsonify({'status': 'error', 'message': 'username already exists'})
 
     user = User.query.filter_by(email=email).first()
-    if user:
-        return jsonify({'status': 'error', 'message': 'email already exists'})
+    if user:<<<<<<< main
+        return jsonify({'status':'error', 'message':'email already exists'})
+
+    # username checking
+    for i in username:
+        if (not i.isdigit()) and (not i.isalpha()):
+            return jsonify({'status':'error', 'message':'username can contain only letter and digit'})
+    if len(username) < 5:
+        return jsonify({'status':'error', 'message':'username must be at least 5 characters long'})
+    if not username[0].isalpha():
+        return jsonify({'status':'error', 'message':'username must start with a letter'})
+    
+    # password checking
+    pass_let, pass_num = 0, 0
+    for i in password:
+        if i.isalpha(): pass_let += 1
+        elif i.isdigit(): pass_num += 1
+    if len(password) < 8 or pass_let == 0 or pass_num == 0:
+        return jsonify({'status':'error', 'message':'password must be at least 8 characters long and contain at least one letter and one digit'})>>>>>>> main
 
     user = User(
         username=username,
