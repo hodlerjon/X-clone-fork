@@ -35,9 +35,6 @@ class Tweet(db.Model):
     text_content = db.Column(db.Text, nullable=False)
     media_content = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
-    __table_args__ = (
-        db.CheckConstraint('char_length(text_content) <= 280'),
-    )
 
     # replies = db.relationship('Reply', backref='tweet', cascade='all, delete')
     # retweets = db.relationship('Retweet', backref='tweet', cascade='all, delete')
@@ -52,13 +49,9 @@ class Follower(db.Model):
     following_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     followed_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    # __table_args__ = (
-    #     db.UniqueConstraint('follower_id', 'following_id'),
-    #     db.CheckConstraint('follower_id <> following_id'),
-    # )
 
 
-class Reply(db.Model):
+class Reply(db.Model): # komment
     __tablename__ = 'replies'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
@@ -67,9 +60,6 @@ class Reply(db.Model):
     media_content = db.Column(db.Text)
     replied_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    # __table_args__ = (
-    #     db.CheckConstraint('char_length(text_content) <= 280'),
-    # )
 
 
 class Retweet(db.Model):
@@ -79,9 +69,6 @@ class Retweet(db.Model):
     tweet_id = db.Column(db.Integer, db.ForeignKey('tweets.id', ondelete='CASCADE'), nullable=False)
     retweeted_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    # __table_args__ = (
-    #     db.UniqueConstraint('user_id', 'tweet_id'),
-    # )
 
 
 class Like(db.Model):
@@ -91,9 +78,6 @@ class Like(db.Model):
     tweet_id = db.Column(db.Integer, db.ForeignKey('tweets.id', ondelete='CASCADE'), nullable=False)
     liked_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    # __table_args__ = (
-    #     db.UniqueConstraint('user_id', 'tweet_id'),
-    # )
 
 
 class View(db.Model):
@@ -102,8 +86,5 @@ class View(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
     tweet_id = db.Column(db.Integer, db.ForeignKey('tweets.id', ondelete='CASCADE'), nullable=False)
     viewed_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
-
-    # Agar har bir user bir tweetni faqat bir marta ko'radi:
-    # __table_args__ = (db.UniqueConstraint('user_id', 'tweet_id'),)
 
 
