@@ -12,14 +12,13 @@ import RightSidebar from './components/layout/RightSidebar'
 import Bookmarks from './components/pages/Bookmarks'
 import Explore from './components/pages/Explore'
 
+// import { Provider } from '@/components/ui/provider'
 import Messages from './components/pages/Messages'
 import Notifications from './components/pages/Notifications'
 import Profile from './components/pages/Profile'
 import Register from './components/pages/Register'
 import XHomepage from './components/pages/Xhomepage'
 
-export const BASE_URL =
-	import.meta.env.MODE === 'development' ? 'http://127.0.0.1:5000/api' : '/api'
 function App() {
 	return (
 		<Router>

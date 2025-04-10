@@ -4,10 +4,15 @@ import { jwtDecode } from 'jwt-decode'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import XLogo from '../ui/Xlogo'
+import XSignupModal from '../pages/register/XSignupModal'
 
 function Register() {
 	const navigate = useNavigate()
 	const [error, setError] = useState('')
+	const [isModalOpen, setIsModalOpen] = useState(false)
+
+	const openModal = () => setIsModalOpen(true)
+	const closeModal = () => setIsModalOpen(false)
 
 	const handleGoogleSuccess = async credentialResponse => {
 		try {
@@ -115,7 +120,10 @@ function Register() {
 							<div className='flex-grow border-t border-gray-700'></div>
 						</div>
 
-						<button className='w-full bg-blue-500 hover:bg-blue-600 px-4 py-3 rounded-full font-medium transition-colors'>
+						<button
+							className='w-full bg-blue-500 hover:bg-blue-600 px-4 py-3 rounded-full font-medium transition-colors'
+							onClick={openModal}
+						>
 							Зарегистрироваться
 						</button>
 
@@ -208,6 +216,9 @@ function Register() {
 				</div>
 				<div className='text-center'>© 2025 X Corp.</div>
 			</footer>
+
+			{/* Modal */}
+			{isModalOpen && <XSignupModal onClose={closeModal} />}
 		</div>
 	)
 }
