@@ -235,6 +235,19 @@ def handle_message(data):
     except Exception as e:
         emit('error', {'message': str(e)})
 
+@socketio.on('typing')
+def handle_typing(data):
+    user_id = data['user_id']
+    receiver_id = data.get('receiver_id')
+    group_id = data.get('group_id')
+
+    if receiver_id:
+        room = f"chat_{min(user_id, receiver_id)}_{max(user_id, receiver_id)}"
+    else:
+        room = f"group_{group_id}"
+
+    user = User.query.get(user_id)
+    emit('typing', {'username': user.username, 'is_typing': True}, room=room, skip_sid=request.sid)
 
 @app.route('/api/upload_media', methods=['POST'])
 def upload_media():
