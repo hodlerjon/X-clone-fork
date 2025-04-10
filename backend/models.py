@@ -36,11 +36,6 @@ class Tweet(db.Model):
     media_content = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
-    # replies = db.relationship('Reply', backref='tweet', cascade='all, delete')
-    # retweets = db.relationship('Retweet', backref='tweet', cascade='all, delete')
-    # likes = db.relationship('Like', backref='tweet', cascade='all, delete')
-    # views = db.relationship('View', backref='tweet', cascade='all, delete')
-
 
 class Follower(db.Model):
     __tablename__ = 'followers'
