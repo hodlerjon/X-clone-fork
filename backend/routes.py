@@ -1,5 +1,6 @@
 from app import app, db
 from flask import request, jsonify
+import os
 from models import *
 
 @app.route("/api/register", methods = ["POST"])
@@ -145,3 +146,22 @@ def get_group_messages(group_id):
         'is_read': msg.is_read,
         'reactions': [{'user_id': r.user_id, 'emoji': r.emoji} for r in Reaction.query.filter_by(message_id=msg.id).all()]
     } for msg in messages]), 200
+
+
+@app.route('/api/upload_media', methods=['POST'])
+def upload_media():
+    print("Request files:", request.files)
+    print("Request form:", request.form)
+    if 'file' not in request.files:
+        print("No file part in request.files")
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        print("No selected file")
+        return jsonify({'error': 'No selected file'}), 400
+
+    filename = f"{datetime.utcnow().timestamp()}_{file.filename}"
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    print(f"File saved as: {filename}")
+    return jsonify({'media_url': f"/{app.config['UPLOAD_FOLDER']}/{filename}"}), 200
