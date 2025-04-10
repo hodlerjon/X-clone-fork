@@ -25,7 +25,7 @@ def register():
         return jsonify({'status': 'error', 'message': 'username already exists'})
 
     user = User.query.filter_by(email=email).first()
-    if user:<<<<<<< main
+    if user:
         return jsonify({'status':'error', 'message':'email already exists'})
 
     # username checking
@@ -43,7 +43,7 @@ def register():
         if i.isalpha(): pass_let += 1
         elif i.isdigit(): pass_num += 1
     if len(password) < 8 or pass_let == 0 or pass_num == 0:
-        return jsonify({'status':'error', 'message':'password must be at least 8 characters long and contain at least one letter and one digit'})>>>>>>> main
+        return jsonify({'status':'error', 'message':'password must be at least 8 characters long and contain at least one letter and one digit'})
 
     user = User(
         username=username,
