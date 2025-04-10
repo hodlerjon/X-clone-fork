@@ -21,6 +21,8 @@ myvenv/
 .env
 .venv
 ENV/
+instance/
+*.db
 
 # Editor directories and files
 .vscode/*
