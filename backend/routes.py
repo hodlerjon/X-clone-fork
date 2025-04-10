@@ -121,14 +121,15 @@ def delete_tweet(id):
 
 
 # get tweets
-@app.route("/api/tweet/<id>", methods=["GET"])
-def get_tweet(id):
-    tweet = Tweet.query.filter_by(id=id).first()
-    if not tweet:
-        return jsonify({'status': 'error', 'message': 'tweet not found'})
-    return jsonify({
+@app.route("/api/tweets/<user_id>", methods=["GET"])
+def get_user_tweets(user_id):
+    tweets = Tweet.query.filter_by(user_id=user_id).all()
+    if not tweets:
+        return jsonify({'status': 'error', 'message': 'no tweets found'})
+    
+    return jsonify([{
         'id': tweet.id,
         'user_id': tweet.user_id,
         'text_content': tweet.text_content,
         'media_content': tweet.media_content
-    })
+    } for tweet in tweets])

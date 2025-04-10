@@ -1,6 +1,7 @@
 import {
 	Bell,
 	Bookmark,
+	CircleEllipsis,
 	Home,
 	Mail,
 	MoreHorizontal,
@@ -66,21 +67,40 @@ const LeftSidebar = () => {
 					text='Profile'
 					active={location.pathname === '/profile'}
 				/>
+
 				<NavItem
-					icon={<MoreHorizontal className='h-6 w-6' />}
+					icon={<CircleEllipsis className='h-6 w-6' />}
 					text='More'
 					onClick={() => setIsMoreModalOpen(true)}
 				/>
 			</nav>
 
-			<button className='bg-white  text-black font-bold py-3 px-4 rounded-full w-full mt-6'>
+			<div className='bg-white hover:bg-gray-300 transition-colors text-black font-bold py-3 cursor-pointer px-4 rounded-full w-full mt-6 mb-6'>
 				Post
-			</button>
+			</div>
 
 			<MoreModal
 				isOpen={isMoreModalOpen}
 				onClose={() => setIsMoreModalOpen(false)}
 			/>
+			<div className=' mt-4 hover:bg-gray-900/50 rounded-full cursor-pointer transition-colors'>
+				<div className=' flex items-center justify-between'>
+					<div className='flex items-center space-x-3'>
+						<div className='w-10 h-10 rounded-full bg-gray-700 flex justify-center items-center'>
+							<span className='font-bold text-lg'>S</span>
+						</div>
+						<div className='flex-1'>
+							<h2 className='font-bold text-[15px] leading-5'>
+								Shukrullo Qurbonov
+							</h2>
+							<p className='text-gray-500 text-sm'>@ShukrulloQ36672</p>
+						</div>
+					</div>
+					<div className='flex items-center'>
+						<MoreHorizontal className='w-5 h-5' />
+					</div>
+				</div>
+			</div>
 		</div>
 	)
 }
