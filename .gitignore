@@ -51,4 +51,4 @@ __pycache__/
 *.coverage
 *.cover
 *.hypothesis/
-*.tox/
+*.tox/__pycache__/
