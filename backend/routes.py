@@ -1,6 +1,9 @@
-from app import app, db
+
 from flask import request, jsonify
+from flask_socketio import emit, join_room, leave_room
+from app import app, db, socketio
 import os
+from datetime import datetime, timezone
 from models import *
 
 @app.route("/api/register", methods = ["POST"])
@@ -148,23 +151,7 @@ def get_group_messages(group_id):
     } for msg in messages]), 200
 
 
-@app.route('/api/upload_media', methods=['POST'])
-def upload_media():
-    print("Request files:", request.files)
-    print("Request form:", request.form)
-    if 'file' not in request.files:
-        print("No file part in request.files")
-        return jsonify({'error': 'No file part'}), 400
 
-    file = request.files['file']
-    if file.filename == '':
-        print("No selected file")
-        return jsonify({'error': 'No selected file'}), 400
-
-    filename = f"{datetime.utcnow().timestamp()}_{file.filename}"
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    print(f"File saved as: {filename}")
-    return jsonify({'media_url': f"/{app.config['UPLOAD_FOLDER']}/{filename}"}), 200
 
 @app.route('/api/search_messages/<int:user_id>', methods=['GET'])
 def search_messages(user_id):
@@ -192,3 +179,90 @@ def block_user(blocker_id, blocked_id):
     db.session.add(block)
     db.session.commit()
     return jsonify({'message': 'User blocked'}), 200
+
+@socketio.on('send_message')
+def handle_message(data):
+    try:
+        if 'sender_id' not in data:
+            emit('error', {'message': 'sender_id is required'})
+            return
+        if 'receiver_id' not in data and 'group_id' not in data:
+            emit('error', {'message': 'receiver_id or group_id is required'})
+            return
+        if 'content' not in data and 'media_url' not in data:
+            emit('error', {'message': 'content or media_url is required'})
+            return
+
+        sender_id = data['sender_id']
+        receiver_id = data.get('receiver_id')
+        group_id = data.get('group_id')
+        content = data.get('content')
+        media_url = data.get('media_url')
+
+        new_message = Message(
+            sender_id=sender_id,
+            receiver_id=receiver_id,
+            group_id=group_id,
+            content=content,
+            media_url=media_url
+        )
+        db.session.add(new_message)
+        db.session.commit()
+
+        if receiver_id is None:  # == None o‘rniga is None ishlatildi
+            room = f"group_{group_id}"
+        else:
+            room = f"chat_{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
+
+        emit('receive_message', {
+            'id': new_message.id,
+            'sender_id': sender_id,
+            'receiver_id': receiver_id,
+            'group_id': group_id,
+            'content': content,
+            'media_url': media_url,
+            'timestamp': new_message.timestamp.isoformat(),
+            'is_read': new_message.is_read
+        }, room=room)
+
+        emit('notification', {'message': 'New message received', 'from_user_id': sender_id}, room=room)
+
+    except Exception as e:
+        emit('error', {'message': str(e)})
+
+# Boshqa endpoint’lar (masalan, /api/upload_media)
+@app.route('/api/upload_media', methods=['POST'])
+def upload_media():
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
+
+        # Fayl turini cheklash
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov'}
+        if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+            return jsonify({'error': 'File type not allowed. Only PNG, JPG, JPEG, GIF, MP4, MOV are allowed'}), 400
+
+        # Fayl nomini xavfsiz qilish
+        from werkzeug.utils import secure_filename
+        filename = secure_filename(file.filename)
+        filename = f"{datetime.now(timezone.utc).timestamp()}_{filename}"  # datetime.utcnow() o‘rniga datetime.now(timezone.utc)
+
+        # Upload jildi mavjudligini tekshirish va yaratish
+        if not os.path.exists(app.config['UPLOAD_FOLDER']):
+            os.makedirs(app.config['UPLOAD_FOLDER'])
+
+        # Faylni saqlash
+        upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(upload_path)
+
+        return jsonify({'media_url': f"/{app.config['UPLOAD_FOLDER']}/{filename}"}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+@app.route('/test')
+def serve_test_page():
+    return app.send_static_file('test.html')
