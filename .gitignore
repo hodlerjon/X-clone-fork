@@ -21,6 +21,8 @@ myvenv/
 .env
 .venv
 ENV/
+instance/
+*.db
 
 # Editor directories and files
 .vscode/*
@@ -49,4 +51,4 @@ __pycache__/
 *.coverage
 *.cover
 *.hypothesis/
-*.tox/
+*.tox/__pycache__/
