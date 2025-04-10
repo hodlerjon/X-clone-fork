@@ -84,22 +84,34 @@ def create_tweet():
 
     return jsonify({'status':'success', 'message':'succesfully created post'})
 
+
 @app.route('/api/create_group', methods=['POST'])
 def create_group():
-    data = request.get_json()
-    name = data.get('name')
-    member_ids = data.get('member_ids')  # [1, 2, 3]
+    try:
+        data = request.get_json()
+        if data is None:
+            return jsonify({'error': 'Invalid or missing JSON data'}), 400
 
-    group = Group(name=name)
-    db.session.add(group)
-    db.session.flush()
+        name = data.get('name')
+        member_ids = data.get('member_ids')
+        if not name or not isinstance(name, str):
+            return jsonify({'error': 'Group name is required and must be a string'}), 400
 
-    for user_id in member_ids:
-        member = GroupMembers(user_id=user_id, group_id=group.id)
-        db.session.add(member)
+        if not member_ids or not isinstance(member_ids, list):
+            return jsonify({'error': 'Member IDs must be a non-empty list'}), 400
 
-    db.session.commit()
-    return jsonify({'message': 'Group created', 'group_id': group.id}), 201
+        group = Group(name=name)
+        db.session.add(group)
+        db.session.flush()
+        for user_id in member_ids:
+            member = GroupMembers(user_id=user_id, group_id=group.id)
+            db.session.add(member)
+        db.session.commit()
+        return jsonify({'message': 'Group created', 'group_id': group.id}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/messages/<int:user_id>/<int:receiver_id>', methods=['GET'])
@@ -120,7 +132,7 @@ def get_messages(user_id, receiver_id):
         'reactions': [{'user_id': r.user_id, 'emoji': r.emoji} for r in Reaction.query.filter_by(message_id=msg.id).all()]
     } for msg in messages if str(user_id) not in msg.deleted_for.split(',')]), 200
 
-@app.route('/group_messages/<int:group_id>', methods=['GET'])
+@app.route('/api/group_messages/<int:group_id>', methods=['GET'])
 def get_group_messages(group_id):
     messages = Message.query.filter_by(group_id=group_id).order_by(Message.timestamp.asc()).all()
     return jsonify([{
