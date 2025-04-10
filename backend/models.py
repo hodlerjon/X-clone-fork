@@ -34,15 +34,10 @@ class Tweet(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text_content = db.Column(db.Text, nullable=False)
     media_content = db.Column(db.Text)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
+    created_at = db.Column(db.DateTime)
     __table_args__ = (
-        db.CheckConstraint('char_length(text_content) <= 280'),
+        db.CheckConstraint('length(text_content) <= 280'),
     )
-
-    # replies = db.relationship('Reply', backref='tweet', cascade='all, delete')
-    # retweets = db.relationship('Retweet', backref='tweet', cascade='all, delete')
-    # likes = db.relationship('Like', backref='tweet', cascade='all, delete')
-    # views = db.relationship('View', backref='tweet', cascade='all, delete')
 
 
 class Follower(db.Model):
