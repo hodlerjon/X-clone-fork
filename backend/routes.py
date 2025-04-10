@@ -155,3 +155,52 @@ def get_user_tweets(user_id):
         'text_content': tweet.text_content,
         'media_content': tweet.media_content
     } for tweet in tweets])
+
+# like tweet
+@app.route("/api/likes", methods = ["POST"])
+def like_tweet():
+    data = request.json
+    user_id = data.get("user_id")
+    tweet_id = data.get("tweet_id")
+    if not user_id or not tweet_id:
+        return jsonify({'status':'error', 'message':'user_id and tweet_id are required'})
+    
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({'status':'error', 'message':'user_id not available'})
+    
+    tweet = Tweet.query.filter_by(id=tweet_id).first()
+    if not tweet:
+        return jsonify({'status':'error', 'message':'tweet_id not available'})
+    
+    if tweet in user.liked_tweets:
+        user.liked_tweets.remove(tweet)
+        db.session.commit()
+        return jsonify({'status':'success', 'message':'tweet unliked successfully'})
+    else:
+        user.liked_tweets.append(tweet)
+        db.session.commit()
+        return jsonify({'status':'success', 'message':'tweet liked successfully'})
+    
+# like bosgan tweetimizni olish
+# get liked tweets
+@app.route("/api/likes/<user_id>", methods = ["GET"])
+def get_liked_tweets(user_id):
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({'status':'error', 'message':'user_id not available'})
+    liked_tweets = user.liked_tweets
+    liked_tweets_list = []
+    for tweet in liked_tweets:
+        liked_tweets_list.append(tweet.to_dict())
+    return jsonify({'status':'success', 'liked_tweets':liked_tweets_list})
+
+# Barcha tweetlarni olish
+# get all tweets
+@app.route("/api/tweets", methods = ["GET"])
+def get_tweets():
+    tweets = Tweet.query.all()
+    tweets_list = []
+    for tweet in tweets:
+        tweets_list.append(tweet.to_dict())
+    return jsonify({'status':'success', 'tweets':tweets_list})
