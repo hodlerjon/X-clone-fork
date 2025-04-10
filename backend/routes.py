@@ -165,3 +165,20 @@ def upload_media():
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     print(f"File saved as: {filename}")
     return jsonify({'media_url': f"/{app.config['UPLOAD_FOLDER']}/{filename}"}), 200
+
+@app.route('/api/search_messages/<int:user_id>', methods=['GET'])
+def search_messages(user_id):
+    query = request.args.get('query')
+    messages = Message.query.filter(
+        ((Message.sender_id == user_id) | (Message.receiver_id == user_id)) &
+        (Message.content.ilike(f'%{query}%'))
+    ).all()
+
+    return jsonify([{
+        'id': msg.id,
+        'sender_id': msg.sender_id,
+        'receiver_id': msg.receiver_id,
+        'group_id': msg.group_id,
+        'content': msg.content,
+        'timestamp': msg.timestamp.isoformat()
+    } for msg in messages]), 200
