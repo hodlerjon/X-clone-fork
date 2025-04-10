@@ -151,8 +151,6 @@ def get_group_messages(group_id):
     } for msg in messages]), 200
 
 
-
-
 @app.route('/api/search_messages/<int:user_id>', methods=['GET'])
 def search_messages(user_id):
     query = request.args.get('query')
@@ -179,6 +177,13 @@ def block_user(blocker_id, blocked_id):
     db.session.add(block)
     db.session.commit()
     return jsonify({'message': 'User blocked'}), 200
+
+@app.route('/api/unread_count/<int:user_id>', methods=['GET'])
+def unread_count(user_id):
+    unread = Message.query.filter(
+        (Message.receiver_id == user_id) & (Message.is_read == False)
+    ).count()
+    return jsonify({'unread_count': unread}), 200
 
 @socketio.on('send_message')
 def handle_message(data):
@@ -230,7 +235,7 @@ def handle_message(data):
     except Exception as e:
         emit('error', {'message': str(e)})
 
-# Boshqa endpoint’lar (masalan, /api/upload_media)
+
 @app.route('/api/upload_media', methods=['POST'])
 def upload_media():
     try:
@@ -240,22 +245,15 @@ def upload_media():
         file = request.files['file']
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
-
-        # Fayl turini cheklash
         allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'mov'}
         if '.' not in file.filename or file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
             return jsonify({'error': 'File type not allowed. Only PNG, JPG, JPEG, GIF, MP4, MOV are allowed'}), 400
-
-        # Fayl nomini xavfsiz qilish
         from werkzeug.utils import secure_filename
         filename = secure_filename(file.filename)
-        filename = f"{datetime.now(timezone.utc).timestamp()}_{filename}"  # datetime.utcnow() o‘rniga datetime.now(timezone.utc)
+        filename = f"{datetime.now(timezone.utc).timestamp()}_{filename}"
 
-        # Upload jildi mavjudligini tekshirish va yaratish
         if not os.path.exists(app.config['UPLOAD_FOLDER']):
             os.makedirs(app.config['UPLOAD_FOLDER'])
-
-        # Faylni saqlash
         upload_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(upload_path)
 
@@ -263,6 +261,3 @@ def upload_media():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-@app.route('/test')
-def serve_test_page():
-    return app.send_static_file('test.html')
