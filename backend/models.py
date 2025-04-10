@@ -33,13 +33,8 @@ class Tweet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     text_content = db.Column(db.Text, nullable=False)
-    media_content = db.Column(db.Text)
-    created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
-
-    # replies = db.relationship('Reply', backref='tweet', cascade='all, delete')
-    # retweets = db.relationship('Retweet', backref='tweet', cascade='all, delete')
-    # likes = db.relationship('Like', backref='tweet', cascade='all, delete')
-    # views = db.relationship('View', backref='tweet', cascade='all, delete')
+    media_content = db.Column(db.Text)<<<<<<< main
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)>>>>>>> main
 
 
 class Follower(db.Model):
