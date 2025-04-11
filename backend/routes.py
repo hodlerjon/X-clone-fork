@@ -1,6 +1,6 @@
 from app import app, db
 from flask import request, jsonify
-from models import User, Tweet
+from models import User, Tweet, Follower
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
@@ -239,3 +239,35 @@ def get_tweets():
     for tweet in tweets:
         tweets_list.append(tweet.to_json())
     return jsonify({'status':'success', 'tweets':tweets_list})
+
+
+@app.route("/api/follow", methods = ["POST"])
+def follow():
+    data = request.json
+    follower_id = data.get("follower_id")
+    following_id = data.get("following_id")
+
+    if not follower_id or not following_id:
+        return jsonify({'status':'error', 'message':'follower_id and following_id are required'})
+    
+    if follower_id == following_id:
+        return jsonify({'status':'error', 'message':'follower_id and following_id cannot be equal'})
+    
+    user = User.query.filter_by(id=follower_id).first()
+    if not user:
+        return jsonify({'status':'error', 'message':'follower_id not available'})
+    
+    user = User.query.filter_by(id=following_id).first()
+    if not user:
+        return jsonify({'status':'error', 'message':'following_id not available'})
+
+    follow = db.session.query(Follower).filter(Follower.follower_id == follower_id, Follower.following_id == following_id).first()
+    if follow:
+        db.session.delete(follow)
+        db.session.commit()
+        return jsonify({'status':'success', 'message':'unfollowed successfully'})
+    else:
+        follow = Follower(follower_id = follower_id, following_id = following_id)
+        db.session.add(follow)
+        db.session.commit()
+        return jsonify({'status':'success', 'message':'followed successfully'})
