@@ -26,8 +26,9 @@ __pycache__/
 ENV/
 instance/
 *.db
-backend/__pycache__/
-backend/myvenv/
+backend/__pycache__/*
+backend/myvenv/*
+
 
 # Editor directories and files
 .vscode/*
