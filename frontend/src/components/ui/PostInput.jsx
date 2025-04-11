@@ -1,22 +1,52 @@
-import React, { useRef, useState } from 'react'
+import EmojiPicker from 'emoji-picker-react'
+import React, { useEffect, useRef, useState } from 'react'
 import { CiFaceSmile, CiImageOn } from 'react-icons/ci'
 import { HiOutlineGif } from 'react-icons/hi2'
 import { IoCloseOutline } from 'react-icons/io5'
-import EmojiPicker from 'emoji-picker-react'
 
 const PostInput = () => {
 	const [content, setContent] = useState('')
 	const [selectedImage, setSelectedImage] = useState(null)
 	const [showEmojis, setShowEmojis] = useState(false)
+	const [isLoading, setIsLoading] = useState(false)
 	const fileInputRef = useRef(null)
+	const emojiPickerRef = useRef(null)
+	const [formData, setFormData] = useState({
+		user_id: Math.random().toString(36).substring(2, 15),
+		content: '',
+		selectedImage: '',
+	})
+
+	// Close emoji picker when clicking outside
+	useEffect(() => {
+		const handleClickOutside = event => {
+			if (
+				emojiPickerRef.current &&
+				!emojiPickerRef.current.contains(event.target)
+			) {
+				setShowEmojis(false)
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside)
+		return () => document.removeEventListener('mousedown', handleClickOutside)
+	}, [])
 
 	const handleChange = e => {
-		setContent(e.target.value)
+		const text = e.target.value
+		if (text.length <= 280) {
+			setContent(text)
+			setFormData(prev => ({
+				...prev,
+				content: text,
+			}))
+		}
 	}
 
 	const handleEmojiClick = emojiObject => {
-		setContent(prevContent => prevContent + emojiObject.emoji)
-		setShowEmojis(false)
+		if (content.length + emojiObject.emoji.length <= 280) {
+			setContent(prevContent => prevContent + emojiObject.emoji)
+		}
 	}
 
 	const toggleEmojiPicker = () => {
@@ -29,8 +59,25 @@ const PostInput = () => {
 
 	const handleImageChange = e => {
 		const file = e.target.files[0]
-		if (file && file.type.startsWith('image/')) {
-			setSelectedImage(URL.createObjectURL(file))
+		if (file) {
+			if (file.size > 5 * 1024 * 1024) {
+				// 5MB limit
+				alert('Image size should be less than 5MB')
+				return
+			}
+			if (file.type.startsWith('image/')) {
+				const reader = new FileReader()
+				reader.onloadend = () => {
+					setSelectedImage(reader.result)
+					setFormData(prev => ({
+						...prev,
+						selectedImage: reader.result,
+					}))
+				}
+				reader.readAsDataURL(file)
+			} else {
+				alert('Please select an image file')
+			}
 		}
 	}
 
@@ -39,6 +86,51 @@ const PostInput = () => {
 	}
 
 	const isDisabled = content.trim().length === 0 && !selectedImage
+
+	const handlePost = async e => {
+		e.preventDefault()
+		setIsLoading(true)
+
+		try {
+			const formDataToSend = new FormData()
+			formDataToSend.append('user_id', formData.user_id)
+			formDataToSend.append('content', content) // Используем content напрямую
+
+			if (selectedImage) {
+				const response = await fetch(selectedImage)
+				const blob = await response.blob()
+				const imageFile = new File([blob], 'tweet_image.jpg', {
+					type: 'image/jpeg',
+				})
+				formDataToSend.append('image', imageFile)
+			}
+
+			const response = await fetch('http://localhost:5000/api/tweets', {
+				method: 'POST',
+				// Удаляем JSON.stringify и отправляем FormData напрямую
+				body: formDataToSend,
+			})
+
+			const data = await response.json()
+			if (data.status === 'success') {
+				setContent('')
+				setSelectedImage(null)
+				setFormData({
+					user_id: Math.random().toString(36).substring(2, 15),
+					content: '',
+					selectedImage: '',
+				})
+				alert('Tweet posted successfully!')
+			} else {
+				alert(data.message || 'Error posting tweet')
+			}
+		} catch (error) {
+			console.error('Error posting data:', error)
+			alert('Network error occurred. Please try again.')
+		} finally {
+			setIsLoading(false)
+		}
+	}
 
 	return (
 		<div className='p-4 border-b border-gray-800'>
@@ -52,18 +144,24 @@ const PostInput = () => {
 						onChange={handleChange}
 						className='w-full bg-transparent text-white text-xl p-2 outline-none'
 						placeholder="What's happening?"
+						maxLength={280}
 					/>
+
+					{/* Character count */}
+					<div className='text-sm text-gray-500 text-right'>
+						{content.length}/280
+					</div>
 
 					{selectedImage && (
 						<div className='relative mt-2'>
 							<img
 								src={selectedImage}
 								alt='Selected'
-								className='rounded-2xl max-h-80 object-contain'
+								className='rounded-2xl max-h-80 object-cover w-full'
 							/>
 							<button
 								onClick={removeImage}
-								className='absolute top-2 left-2 p-1 rounded-full bg-black/50 hover:bg-black/70 text-white'
+								className='absolute top-2 right-2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors'
 							>
 								<IoCloseOutline size={20} />
 							</button>
@@ -98,12 +196,15 @@ const PostInput = () => {
 							</div>
 
 							{showEmojis && (
-								<div className='absolute  left-0 z-10'>
+								<div ref={emojiPickerRef} className='absolute  left-0 z-10'>
 									<EmojiPicker
 										onEmojiClick={handleEmojiClick}
 										theme='dark'
 										width={320}
 										height={400}
+										searchDisabled
+										skinTonesDisabled
+										previewConfig={{ showPreview: false }}
 									/>
 								</div>
 							)}
@@ -115,15 +216,16 @@ const PostInput = () => {
 							</div>
 						</div>
 						<button
-							disabled={isDisabled}
+							onClick={handlePost}
+							disabled={isDisabled || isLoading}
 							className={`px-4 py-2 rounded-full font-bold transition-colors
                 ${
-									isDisabled
-										? 'bg-gray-500 text-black '
-										: 'bg-white text-black cursor-not-allowed'
+									isDisabled || isLoading
+										? 'bg-gray-400 text-black cursor-not-allowed'
+										: 'bg-white text-black  hover:bg-blue-600'
 								}`}
 						>
-							Post
+							{isLoading ? 'Posting...' : 'Post'}
 						</button>
 					</div>
 				</div>

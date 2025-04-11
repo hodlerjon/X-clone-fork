@@ -4,6 +4,7 @@ from models import User, Tweet
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
+from app import allowed_file
 
 
 # register
@@ -98,35 +99,51 @@ def login():
 @app.route('/api/tweets', methods=['POST'])
 def create_tweet():
     try:
-        data = request.form
-        user_id = data.get('user_id')
+        # Получаем данные твита
+        content = request.form.get('content')
+        user_id = request.form.get('user_id')
+        print(content, user_id)
+        if not content or not user_id:
+            return jsonify({
+                'status': 'error',
+                'message': 'Content and user_id are required'
+            }), 400
+        
+        # Проверяем наличие изображения
+        image_url = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and allowed_file(file.filename):
+                # Создаем уникальное имя файла
+                filename = secure_filename(f"{datetime.now().timestamp()}_{file.filename}")
+                # Сохраняем файл
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                # Формируем URL для доступа к изображению
+                image_url = f"/uploads/{filename}"
 
-        if not user_id:
-            return jsonify({"status": "error", "message": "user_id not available"}), 400
-
-        text_content = data.get('text_content')
-        media_file = request.files.get('media_content')
-
+        # Создаем новый твит используя модель Tweet
         new_tweet = Tweet(
             user_id=user_id,
-            text_content=text_content,
-            created_at=datetime.utcnow()
+            text_content=content,
+            media_content=image_url
         )
-
-        if media_file:
-            # Handle media upload
-            filename = secure_filename(media_file.filename)
-            media_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            new_tweet.media_content = filename
-
+        
+        # Сохраняем в базу данных через SQLAlchemy
         db.session.add(new_tweet)
         db.session.commit()
 
-        return jsonify({"status": "success", "message": "Tweet created successfully"})
+        return jsonify({
+            'status': 'success',
+            'message': 'Tweet created successfully',
+            'data': new_tweet.to_json()
+        })
 
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
+        db.session.rollback()  # Откатываем транзакцию в случае ошибки
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
 
 # edit tweet
 @app.route("/api/tweet/<id>", methods=["PATCH"])
@@ -220,5 +237,5 @@ def get_tweets():
     tweets = Tweet.query.all()
     tweets_list = []
     for tweet in tweets:
-        tweets_list.append(tweet.to_dict())
+        tweets_list.append(tweet.to_json())
     return jsonify({'status':'success', 'tweets':tweets_list})

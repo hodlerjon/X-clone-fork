@@ -1,7 +1,7 @@
 // App.jsx
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
 import { jwtDecode } from 'jwt-decode'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import XLogo from '../ui/Xlogo'
 import XSignupModal from '../pages/register/XSignupModal'

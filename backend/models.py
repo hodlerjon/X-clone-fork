@@ -36,6 +36,14 @@ class Tweet(db.Model):
     media_content = db.Column(db.Text)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
 
+    def to_json(self):
+        return {
+            'id': self.id,
+            'text_content': self.text_content,
+            'media_content': self.media_content,
+            'created_at': self.created_at.ctime(),
+        }
+
 
 class Follower(db.Model):
     __tablename__ = 'followers'
