@@ -14,7 +14,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
+backend/uploads/
 # Python
 __pycache__/
 *.py[cod]
@@ -39,3 +39,5 @@ backend/myvenv/
 *.njsproj
 *.sln
 *.sw?
+
+
