@@ -14,7 +14,14 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+
+# Backend specific
 backend/uploads/
+backend/__pycache__/
+backend/myvenv/
+backend/instance/
+backend/*.db
+
 # Python
 __pycache__/
 *.py[cod]
@@ -23,12 +30,12 @@ __pycache__/
 **/myvenv/
 **/.env
 .venv
+env/
 ENV/
 instance/
 *.db
-backend/__pycache__/*
-backend/myvenv/*
-
+*.sqlite
+*.sqlite3
 
 # Editor directories and files
 .vscode/*
@@ -40,5 +47,14 @@ backend/myvenv/*
 *.njsproj
 *.sln
 *.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 
