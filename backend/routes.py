@@ -1,6 +1,6 @@
 from app import app, db
 from flask import request, jsonify
-from models import User, Tweet, Follower
+from models import *
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
@@ -243,31 +243,50 @@ def get_tweets():
 
 @app.route("/api/follow", methods = ["POST"])
 def follow():
-    data = request.json
-    follower_id = data.get("follower_id")
-    following_id = data.get("following_id")
+    try: 
+        data = request.json
+        follower_id = data.get("follower_id")
+        following_id = data.get("following_id")
 
-    if not follower_id or not following_id:
-        return jsonify({'status':'error', 'message':'follower_id and following_id are required'})
-    
-    if follower_id == following_id:
-        return jsonify({'status':'error', 'message':'follower_id and following_id cannot be equal'})
-    
-    user = User.query.filter_by(id=follower_id).first()
-    if not user:
-        return jsonify({'status':'error', 'message':'follower_id not available'})
-    
-    user = User.query.filter_by(id=following_id).first()
-    if not user:
-        return jsonify({'status':'error', 'message':'following_id not available'})
+        if not follower_id or not following_id:
+            return jsonify({'status':'error', 'message':'follower_id and following_id are required'})
+        
+        if follower_id == following_id:
+            return jsonify({'status':'error', 'message':'follower_id and following_id cannot be equal'})
+        
+        user = User.query.filter_by(id=follower_id).first()
+        if not user:
+            return jsonify({'status':'error', 'message':'follower_id not available'})
+        
+        user = User.query.filter_by(id=following_id).first()
+        if not user:
+            return jsonify({'status':'error', 'message':'following_id not available'})
 
-    follow = db.session.query(Follower).filter(Follower.follower_id == follower_id, Follower.following_id == following_id).first()
-    if follow:
-        db.session.delete(follow)
-        db.session.commit()
-        return jsonify({'status':'success', 'message':'unfollowed successfully'})
-    else:
-        follow = Follower(follower_id = follower_id, following_id = following_id)
-        db.session.add(follow)
-        db.session.commit()
-        return jsonify({'status':'success', 'message':'followed successfully'})
+        follow = db.session.query(Follower).filter(Follower.follower_id == follower_id, Follower.following_id == following_id).first()
+        if follow:
+            db.session.delete(follow)
+            db.session.commit()
+            return jsonify({'status':'success', 'message':'unfollowed successfully'})
+        else:
+            follow = Follower(follower_id = follower_id, following_id = following_id)
+            db.session.add(follow)
+            db.session.commit()
+            return jsonify({'status':'success', 'message':'followed successfully'})
+    except:
+        return jsonify({'status':'error', 'message':'something went wrong'})
+
+
+@app.route("/api/follow/<user_id>", methods = ["GET"])
+def get_follows(user_id):
+    try:
+        follows = Follower.query.filter_by(follower_id = user_id).all()
+        if follows:
+            follow_ids = []
+            for i in follows: follow_ids.append(i.following_id)
+            return jsonify({'status':'success', 'message':'succesfully received data', 'data':follow_ids})
+        else:
+            return jsonify({'status':'error', 'message':'this user has no followings'})
+    except Exception as e:
+        return jsonify({'status':'error', 'message':f'something went wrong: {e}'})
+    
+
