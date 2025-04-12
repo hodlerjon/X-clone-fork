@@ -22,14 +22,15 @@ function XSignupModal({ onClose }) {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					Accept: 'application/json', // Добавляем Accept header
 				},
+				credentials: 'include', // Добавляем поддержку куки
 				body: JSON.stringify(formData),
 			})
 
 			const data = await response.json()
 
 			if (data.status === 'success') {
-				// Store user data in localStorage
 				localStorage.setItem(
 					'user',
 					JSON.stringify({
@@ -38,12 +39,15 @@ function XSignupModal({ onClose }) {
 						isAuthenticated: true,
 					})
 				)
-				onClose() // Close the modal
-				navigate('/') // Redirect to home page
+				console.log('Registration successful:', data) // Добавляем лог
+				onClose()
+				navigate('/')
 			} else {
-				setError(data.message)
+				console.error('Registration failed:', data) // Добавляем лог ошибки
+				setError(data.message || 'Registration failed')
 			}
 		} catch (err) {
+			console.error('Network error:', err) // Добавляем детальный лог ошибки
 			setError('Something went wrong. Please try again.')
 		}
 	}

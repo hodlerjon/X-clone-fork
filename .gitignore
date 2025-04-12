@@ -33,6 +33,9 @@ __pycache__/
 env/
 ENV/
 instance/
+uploads/
+myvenv/
+__pycache__/
 *.db
 *.sqlite
 *.sqlite3
