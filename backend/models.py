@@ -104,3 +104,9 @@ class Message(db.Model):
     is_read = db.Column(db.Boolean, default=False)
     deleted_for = db.Column(db.String(200), default='')
 
+class Reaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    message_id = db.Column(db.Integer, db.ForeignKey('message.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    emoji = db.Column(db.String(10), nullable=False)
+
