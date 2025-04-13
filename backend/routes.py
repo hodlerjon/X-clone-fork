@@ -248,6 +248,18 @@ def handle_typing(data):
 
     user = User.query.get(user_id)
     emit('typing', {'username': user.username, 'is_typing': True}, room=room, skip_sid=request.sid)
+@socketio.on('read_message')
+def handle_read_message(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+
+    message = Message.query.get(message_id)
+    if message and (message.receiver_id == user_id or message.group_id):
+        message.is_read = True
+        db.session.commit()
+
+        room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+        emit('message_read', {'message_id': message_id, 'is_read': True}, room=room)
 
 @app.route('/api/upload_media', methods=['POST'])
 def upload_media():
