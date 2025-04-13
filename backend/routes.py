@@ -288,7 +288,7 @@ def get_follows(user_id):
             return jsonify({'status':'error', 'message':'this user has no followings'})
     except Exception as e:
         return jsonify({'status':'error', 'message':f'something went wrong: {e}'})
-    
+
 
 @app.route("/api/reply", methods = ["POST"])
 def reply():
@@ -311,6 +311,25 @@ def reply():
         db.session.commit()
         return jsonify({'status':'success', 'message':'replied succesfully'})
     except Exception as e:
-        return jsonify({'status':'error', 'message':f'Something went wrong: {e}'})
+        return jsonify({'status':'error', 'message':'Something went wrong'})
+
+
+@app.route("/api/<int:tweet_id>/replies", methods = ["GET"])
+def tweet_replies(tweet_id):
+    try:
+        tweet = Tweet.query.filter_by(id = tweet_id).first()
+        if not tweet:
+            return jsonify({'status':'error', 'message':'tweet_id is not available'})
+        replies = Reply.query.filter_by(tweet_id = tweet_id).all()
+        data = []
+        for i in replies:
+            data.append({'user_id':i.user_id, 'tweet_id':i.tweet_id, 'text_content':i.text_content})
+        if replies:
+            return jsonify({'status':'success', 'message':'replies data reseived succesfully', 'data':data})
+        else:
+            return jsonify({'status':'error', 'message':'this post has no replies'})
+    except:
+        return jsonify({'status':'error', 'message':'Something went wrong'})
+
 
 
