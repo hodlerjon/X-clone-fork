@@ -127,7 +127,7 @@ def create_tweet():
                 filename = secure_filename(f"{datetime.now().timestamp()}_{file.filename}")
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 
-                # Save the file
+                    # Save the file
                 file.save(file_path)
                 
                 # Generate proper URL for the frontend
@@ -300,8 +300,6 @@ def get_follows(user_id):
     except Exception as e:
         return jsonify({'status':'error', 'message':f'something went wrong: {e}'})
 
-<<<<<<< HEAD
-=======
 
 @app.route("/api/reply", methods = ["POST"])
 def reply():
@@ -372,7 +370,4 @@ def tweet_data(tweet_id):
     
     except:
         return jsonify({'status':'error', 'message':'Something went wrong'})
-
-
->>>>>>> 447447e4fea2b9a01c2ab1e25c78d7bc16125fc9
 
