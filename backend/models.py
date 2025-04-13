@@ -90,13 +90,13 @@ class Group(db.Model):
     members = db.relationship('User', secondary='group_members')
 
 class GroupMembers(db.Model):
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), primary_key=True)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), nullable=True)
     content = db.Column(db.Text, nullable=True)
     media_url = db.Column(db.String(200), nullable=True)
@@ -107,11 +107,11 @@ class Message(db.Model):
 class Reaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     message_id = db.Column(db.Integer, db.ForeignKey('message.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     emoji = db.Column(db.String(10), nullable=False)
 
 class Block(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    blocker_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    blocked_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    blocker_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    blocked_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
 
