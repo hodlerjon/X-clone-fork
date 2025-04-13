@@ -257,3 +257,18 @@ def get_messages(user_id, receiver_id):
         'is_read': msg.is_read,
         'reactions': [{'user_id': r.user_id, 'emoji': r.emoji} for r in Reaction.query.filter_by(message_id=msg.id).all()]
     } for msg in messages if str(user_id) not in msg.deleted_for.split(',')]), 200
+
+
+@app.route('/group_messages/<int:group_id>', methods=['GET'])
+def get_group_messages(group_id):
+    messages = Message.query.filter_by(group_id=group_id).order_by(Message.timestamp.asc()).all()
+    return jsonify([{
+        'id': msg.id,
+        'sender_id': msg.sender_id,
+        'group_id': msg.group_id,
+        'content': msg.content,
+        'media_url': msg.media_url,
+        'timestamp': msg.timestamp.isoformat(),
+        'is_read': msg.is_read,
+        'reactions': [{'user_id': r.user_id, 'emoji': r.emoji} for r in Reaction.query.filter_by(message_id=msg.id).all()]
+    } for msg in messages]), 200
