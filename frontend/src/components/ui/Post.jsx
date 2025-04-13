@@ -1,27 +1,60 @@
-import React, { useState } from 'react'
-import { Icon } from '../layout/Icons'
+import React from 'react'
+import Icons from '../layout/Icons'
 
-const Post = ({ username, handle, time, content, avatarUrl }) => {
+const Post = ({ username, handle, time, content, media, avatar }) => {
 	return (
-		<div className='p-4 border-b border-gray-800 '>
+		<div className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'>
 			<div className='flex space-x-4'>
-				<div className='w-12 h-12 rounded-full overflow-hidden'>
+				{/* Avatar section */}
+				<div className='flex-shrink-0'>
 					<img
-						src={avatarUrl || '/src/avatar.jpg'}
+						src={
+							avatar ||
+							'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'
+						}
 						alt={`${username}'s avatar`}
-						className='w-full h-full object-cover'
+						className='w-12 h-12 rounded-full object-cover'
+						onError={e => {
+							e.target.src =
+								'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'
+						}}
 					/>
 				</div>
-				<div className='flex-1'>
-					<div className='flex items-center space-x-1'>
-						<span className='font-bold'>{username || 'User Name'}</span>
-						<span className='text-gray-500'>
-							{handle || '@username'} · {time || '2h'}
+
+				{/* Content section */}
+				<div className='flex-grow'>
+					{/* Header */}
+					<div className='flex items-center space-x-2'>
+						<span className='font-bold hover:underline'>{username}</span>
+						<span className='text-gray-500'>{handle}</span>
+						<span className='text-gray-500'>·</span>
+						<span className='text-gray-500 text-sm hover:underline'>
+							{time}
 						</span>
 					</div>
-					<p className='mt-2 mb-3 text-left'>{content}</p>
 
-					<Icon />
+					{/* Tweet content */}
+					<p className='mt-2 text-left text-[15px] leading-normal'>{content}</p>
+
+					{/* Media */}
+					{media && (
+						<div className='mt-3'>
+							<img
+								src={media}
+								alt='Post media'
+								className='rounded-2xl max-h-[510px] object-cover w-full border border-gray-800'
+								onError={e => {
+									console.error('Image failed to load:', media)
+									e.target.style.display = 'none'
+								}}
+							/>
+						</div>
+					)}
+
+					{/* Interaction icons */}
+					<div className='mt-3'>
+						<Icons />
+					</div>
 				</div>
 			</div>
 		</div>

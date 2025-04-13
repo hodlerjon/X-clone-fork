@@ -1,21 +1,29 @@
 import EmojiPicker from 'emoji-picker-react'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { use, useEffect, useRef, useState } from 'react'
+import PropTypes from 'prop-types'
 import { CiFaceSmile, CiImageOn } from 'react-icons/ci'
 import { HiOutlineGif } from 'react-icons/hi2'
 import { IoCloseOutline } from 'react-icons/io5'
 
-const PostInput = () => {
-	const [content, setContent] = useState('')
-	const [selectedImage, setSelectedImage] = useState(null)
+const getUserFromStorage = () => {
+	const userStr = localStorage.getItem('user')
+	try {
+		return JSON.parse(userStr).user_id
+	} catch {
+		return null
+	}
+}
+
+const PostInput = ({ onPostSuccess }) => {
+	const [postData, setPostData] = useState({
+		content: '',
+		selectedImage: null,
+		user_id: getUserFromStorage(),
+	})
 	const [showEmojis, setShowEmojis] = useState(false)
 	const [isLoading, setIsLoading] = useState(false)
 	const fileInputRef = useRef(null)
 	const emojiPickerRef = useRef(null)
-	const [formData, setFormData] = useState({
-		user_id: Math.random().toString(36).substring(2, 15),
-		content: '',
-		selectedImage: '',
-	})
 
 	// Close emoji picker when clicking outside
 	useEffect(() => {
@@ -35,8 +43,7 @@ const PostInput = () => {
 	const handleChange = e => {
 		const text = e.target.value
 		if (text.length <= 280) {
-			setContent(text)
-			setFormData(prev => ({
+			setPostData(prev => ({
 				...prev,
 				content: text,
 			}))
@@ -44,8 +51,11 @@ const PostInput = () => {
 	}
 
 	const handleEmojiClick = emojiObject => {
-		if (content.length + emojiObject.emoji.length <= 280) {
-			setContent(prevContent => prevContent + emojiObject.emoji)
+		if (postData.content.length + emojiObject.emoji.length <= 280) {
+			setPostData(prev => ({
+				...prev,
+				content: prev.content + emojiObject.emoji,
+			}))
 		}
 	}
 
@@ -59,45 +69,55 @@ const PostInput = () => {
 
 	const handleImageChange = e => {
 		const file = e.target.files[0]
-		if (file) {
-			if (file.size > 5 * 1024 * 1024) {
-				// 5MB limit
-				alert('Image size should be less than 5MB')
-				return
-			}
-			if (file.type.startsWith('image/')) {
-				const reader = new FileReader()
-				reader.onloadend = () => {
-					setSelectedImage(reader.result)
-					setFormData(prev => ({
-						...prev,
-						selectedImage: reader.result,
-					}))
-				}
-				reader.readAsDataURL(file)
-			} else {
-				alert('Please select an image file')
-			}
+		const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+
+		if (!file) return
+
+		if (file.size > MAX_SIZE) {
+			alert('Image size should be less than 5MB')
+			return
 		}
+
+		if (!file.type.startsWith('image/')) {
+			alert('Please select an image file')
+			return
+		}
+
+		const reader = new FileReader()
+		reader.onloadend = () => {
+			setPostData(prev => ({
+				...prev,
+				selectedImage: reader.result,
+			}))
+		}
+		reader.readAsDataURL(file)
 	}
 
 	const removeImage = () => {
-		setSelectedImage(null)
+		setPostData(prev => ({
+			...prev,
+			selectedImage: null,
+		}))
 	}
 
-	const isDisabled = content.trim().length === 0 && !selectedImage
+	const isDisabled =
+		postData.content.trim().length === 0 && !postData.selectedImage
 
 	const handlePost = async e => {
 		e.preventDefault()
+		if (!postData.user_id) {
+			alert('Please log in to post')
+			return
+		}
 		setIsLoading(true)
 
 		try {
 			const formDataToSend = new FormData()
-			formDataToSend.append('user_id', formData.user_id)
-			formDataToSend.append('content', content) // Используем content напрямую
+			formDataToSend.append('user_id', postData.user_id)
+			formDataToSend.append('content', postData.content)
 
-			if (selectedImage) {
-				const response = await fetch(selectedImage)
+			if (postData.selectedImage) {
+				const response = await fetch(postData.selectedImage)
 				const blob = await response.blob()
 				const imageFile = new File([blob], 'tweet_image.jpg', {
 					type: 'image/jpeg',
@@ -107,26 +127,27 @@ const PostInput = () => {
 
 			const response = await fetch('http://localhost:5000/api/tweets', {
 				method: 'POST',
-				// Удаляем JSON.stringify и отправляем FormData напрямую
 				body: formDataToSend,
+				credentials: 'include',
 			})
 
 			const data = await response.json()
-			if (data.status === 'success') {
-				setContent('')
-				setSelectedImage(null)
-				setFormData({
-					user_id: Math.random().toString(36).substring(2, 15),
+
+			if (response.ok) {
+				const newPost = data.tweet
+				setPostData({
 					content: '',
-					selectedImage: '',
+					selectedImage: null,
+					user_id: postData.user_id,
 				})
-				alert('Tweet posted successfully!')
+				// Pass the complete post data to the parent
+				onPostSuccess(newPost)
 			} else {
-				alert(data.message || 'Error posting tweet')
+				throw new Error(data.message || 'Error posting tweet')
 			}
 		} catch (error) {
-			console.error('Error posting data:', error)
-			alert('Network error occurred. Please try again.')
+			console.error('Error posting tweet:', error)
+			alert(error.message || 'Network error occurred. Please try again.')
 		} finally {
 			setIsLoading(false)
 		}
@@ -140,7 +161,7 @@ const PostInput = () => {
 				</div>
 				<div className='flex-1'>
 					<textarea
-						value={content}
+						value={postData.content}
 						onChange={handleChange}
 						className='w-full bg-transparent text-white text-xl p-2 outline-none'
 						placeholder="What's happening?"
@@ -149,13 +170,13 @@ const PostInput = () => {
 
 					{/* Character count */}
 					<div className='text-sm text-gray-500 text-right'>
-						{content.length}/280
+						{postData.content.length}/280
 					</div>
 
-					{selectedImage && (
+					{postData.selectedImage && (
 						<div className='relative mt-2'>
 							<img
-								src={selectedImage}
+								src={postData.selectedImage}
 								alt='Selected'
 								className='rounded-2xl max-h-80 object-cover w-full'
 							/>
@@ -219,19 +240,48 @@ const PostInput = () => {
 							onClick={handlePost}
 							disabled={isDisabled || isLoading}
 							className={`px-4 py-2 rounded-full font-bold transition-colors
-                ${
-									isDisabled || isLoading
-										? 'bg-gray-400 text-black cursor-not-allowed'
-										: 'bg-white text-black  hover:bg-blue-600'
-								}`}
+        ${
+					isDisabled || isLoading
+						? 'bg-gray-400 text-black cursor-not-allowed'
+						: 'bg-blue-500 text-white hover:bg-blue-600'
+				}`}
 						>
-							{isLoading ? 'Posting...' : 'Post'}
+							{isLoading ? (
+								<span className='flex items-center'>
+									<svg
+										className='animate-spin h-5 w-5 mr-2'
+										viewBox='0 0 24 24'
+									>
+										<circle
+											className='opacity-25'
+											cx='12'
+											cy='12'
+											r='10'
+											stroke='currentColor'
+											strokeWidth='4'
+											fill='none'
+										/>
+										<path
+											className='opacity-75'
+											fill='currentColor'
+											d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z'
+										/>
+									</svg>
+									Posting...
+								</span>
+							) : (
+								'Post'
+							)}
 						</button>
 					</div>
 				</div>
 			</div>
 		</div>
 	)
+}
+
+PostInput.propTypes = {
+	onPostSuccess: PropTypes.func.isRequired,
 }
 
 export default PostInput

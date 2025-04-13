@@ -34,10 +34,43 @@ function AppContent() {
 	const [isAuthenticated, setIsAuthenticated] = useState(false)
 
 	useEffect(() => {
-		// Check if user is authenticated
-		const user = localStorage.getItem('user')
-		setIsAuthenticated(!!user)
-	}, [])
+		// Check authentication on initial load and page refresh
+		const checkAuth = () => {
+			const userData = localStorage.getItem('user')
+			if (userData) {
+				try {
+					const user = JSON.parse(userData)
+					if (user && user.isAuthenticated) {
+						setIsAuthenticated(true)
+						// If on register/login page, redirect to home
+						const isAuthPage = ['/register', '/login'].includes(
+							window.location.pathname
+						)
+						if (isAuthPage) {
+							navigate('/')
+						}
+					} else {
+						handleLogout()
+					}
+				} catch (error) {
+					handleLogout()
+				}
+			} else {
+				handleLogout()
+			}
+		}
+
+		const handleLogout = () => {
+			localStorage.removeItem('user')
+			setIsAuthenticated(false)
+			// Only redirect to register if not already there
+			if (!['/register', '/login'].includes(window.location.pathname)) {
+				navigate('/register')
+			}
+		}
+
+		checkAuth()
+	}, [navigate])
 
 	// Public routes that don't require authentication
 	const publicRoutes = ['/register', '/login']

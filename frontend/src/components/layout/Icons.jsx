@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import React, { useState } from 'react'
 
-export const Icon = () => {
+const Icons = () => {
 	const [isLiked, setIsLiked] = useState(false)
 	const [isRetweeted, setIsRetweeted] = useState(false)
 	const [likes, setLikes] = useState(24)
@@ -91,3 +91,4 @@ export const Icon = () => {
 		</div>
 	)
 }
+export default Icons

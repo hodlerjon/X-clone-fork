@@ -8,9 +8,12 @@ from app import allowed_file
 
 
 # register
-@app.route("/api/register", methods=["POST"])
+@app.route('/api/register', methods=['POST'])
 def register():
-    data = request.json
+    data = request.get_json()
+    user_id = data.get('user_id')
+    if not user_id:
+        return jsonify({'status': 'error', 'message': 'user_id is required'}), 400
     username = data.get("username")
     email = data.get("email")
     password = data.get("password")
@@ -47,6 +50,7 @@ def register():
         return jsonify({'status':'error', 'message':'password must be at least 8 characters long and contain at least one letter and one digit'})
 
     user = User(
+        user_id=data['user_id'], 
         username=username,
         email=email,
         full_name=full_name,
@@ -84,7 +88,7 @@ def login():
             'status': 'success',
             'message': 'successfully logged in',
             'user': {
-                'id': user.id,
+                'user_id': user.user_id,
                 'username': user.username,
                 'email': user.email,
                 'full_name': user.full_name,
@@ -99,50 +103,56 @@ def login():
 @app.route('/api/tweets', methods=['POST'])
 def create_tweet():
     try:
-        # Получаем данные твита
         content = request.form.get('content')
         user_id = request.form.get('user_id')
-        print(content, user_id)
+        
         if not content or not user_id:
             return jsonify({
                 'status': 'error',
                 'message': 'Content and user_id are required'
             }), 400
         
-        # Проверяем наличие изображения
+        user = User.query.filter_by(user_id=user_id).first()
+        if not user:
+            return jsonify({
+                'status': 'error',
+                'message': 'User not found'
+            }), 404
+
+        # Modified image handling
         image_url = None
         if 'image' in request.files:
             file = request.files['image']
             if file and allowed_file(file.filename):
-                # Создаем уникальное имя файла
                 filename = secure_filename(f"{datetime.now().timestamp()}_{file.filename}")
-                # Сохраняем файл
+                # Ensure upload directory exists
+                if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                    os.makedirs(app.config['UPLOAD_FOLDER'])
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                # Формируем URL для доступа к изображению
-                image_url = f"/uploads/{filename}"
+                # Update the URL to be accessible from frontend
+                image_url = f"http://localhost:5000/uploads/{filename}"
 
-        # Создаем новый твит используя модель Tweet
         new_tweet = Tweet(
             user_id=user_id,
             text_content=content,
             media_content=image_url
         )
         
-        # Сохраняем в базу данных через SQLAlchemy
         db.session.add(new_tweet)
         db.session.commit()
 
         return jsonify({
             'status': 'success',
             'message': 'Tweet created successfully',
-            'data': new_tweet.to_json()
+            'tweet': new_tweet.to_json()
         })
 
     except Exception as e:
-        db.session.rollback()  # Откатываем транзакцию в случае ошибки
+        print(f"Error creating tweet: {str(e)}")
+        db.session.rollback()
         return jsonify({
             'status': 'error',
-            'message': str(e)
+            'message': 'Internal server error'
         }), 500
 
 # edit tweet

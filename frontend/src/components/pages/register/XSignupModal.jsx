@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom'
 function XSignupModal({ onClose }) {
 	const navigate = useNavigate()
 	const [formData, setFormData] = useState({
-		username: '', // Changed from name to username to match backend
+		username: '',
 		email: '',
 		password: '',
 		full_name: '',
 		bio: '',
-		profile_image_url: '', // Optional
+		user_id: Math.random().toString(36).substring(2, 15),
+		profile_image_url: '',
 	})
 	const [error, setError] = useState('')
 
@@ -29,7 +30,7 @@ function XSignupModal({ onClose }) {
 			})
 
 			const data = await response.json()
-
+			console.log('Response data:', data) // Добавляем лог ответа
 			if (data.status === 'success') {
 				localStorage.setItem(
 					'user',
@@ -37,6 +38,7 @@ function XSignupModal({ onClose }) {
 						username: formData.username,
 						email: formData.email,
 						isAuthenticated: true,
+						user_id: formData.user_id,
 					})
 				)
 				console.log('Registration successful:', data) // Добавляем лог

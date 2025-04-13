@@ -1,47 +1,71 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Post from '../ui/Post'
 import PostInput from '../ui/PostInput'
-const ForYoucontent = () => {
-	const posts = [
-		{
-			id: 1,
-			username: 'React Developer',
-			handle: '@reactdev',
-			time: '3h',
-			content:
-				'Just launched a new React app! Check out my repository. #ReactJS #WebDev',
-		},
-		{
-			id: 2,
-			username: 'JavaScript News',
-			handle: '@jsnews',
-			time: '5h',
-			content:
-				'TypeScript 5.5 is now available with exciting new features. #JavaScript #TypeScript',
-		},
-		{
-			id: 3,
-			username: 'Tech Enthusiast',
-			handle: '@techlover',
-			time: '7h',
-			content:
-				'AI is transforming how we build web applications. What are your thoughts on AI in web development? #AI #WebDevelopment',
-		},
-	]
+const ForYouContent = () => {
+	const [posts, setPosts] = useState([])
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState(null)
+
+	const fetchPosts = async () => {
+		try {
+			const response = await fetch('http://localhost:5000/api/tweets', {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+				},
+				credentials: 'include',
+			})
+
+			if (!response.ok) {
+				throw new Error('Failed to fetch posts')
+			}
+
+			const data = await response.json()
+			setPosts(data.tweets || [])
+		} catch (err) {
+			setError(err.message)
+			console.error('Error fetching posts:', err)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	// Handler for new posts
+	const handleNewPost = newPost => {
+		if (!newPost || !newPost.id) {
+			console.error('Invalid post data:', newPost)
+			return
+		}
+
+		setPosts(prevPosts => [newPost, ...prevPosts])
+	}
+
+	useEffect(() => {
+		fetchPosts()
+	}, [])
+
+	if (loading) return <div>Loading...</div>
+	if (error) return <div>Error: {error}</div>
+
 	return (
 		<div className='flex flex-col'>
-			<PostInput />
-
-			{posts.map(post => (
-				<Post
-					key={post.id}
-					username={post.username}
-					handle={post.handle}
-					time={post.time}
-					content={post.content}
-				/>
-			))}
+			<PostInput onPostSuccess={handleNewPost} />
+			<div className='space-y-4'>
+				{posts?.map(post => (
+					<Post
+						key={post.id}
+						username={post?.user?.username}
+						handle={`@${post?.user?.username}`}
+						time={new Date(post.created_at).toLocaleString()}
+						content={post.text_content}
+						media={post.media_content}
+						avatar={post?.user?.profile_image_url}
+					/>
+				))}
+			</div>
 		</div>
 	)
 }
-export default ForYoucontent
+
+export default ForYouContent
