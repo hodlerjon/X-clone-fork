@@ -8,6 +8,6 @@ __pycache__/
 # Ma'lumotlar bazasi fayllari (agar kerak bo'lsa)
 *.db
 
-# Virtual environment jildlari
-venv/
+
+
 env/
