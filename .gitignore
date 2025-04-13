@@ -1,0 +1,13 @@
+# Python bytecode fayllari
+__pycache__/
+*.pyc
+
+# IDE sozlamalari
+.idea/
+
+# Ma'lumotlar bazasi fayllari (agar kerak bo'lsa)
+*.db
+
+# Virtual environment jildlari
+venv/
+env/
