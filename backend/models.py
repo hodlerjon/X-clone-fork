@@ -93,3 +93,14 @@ class GroupMembers(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
     group_id = db.Column(db.Integer, db.ForeignKey('group.id'), primary_key=True)
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), nullable=True)
+    content = db.Column(db.Text, nullable=True)
+    media_url = db.Column(db.String(200), nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    is_read = db.Column(db.Boolean, default=False)
+    deleted_for = db.Column(db.String(200), default='')
+
