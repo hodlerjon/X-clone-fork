@@ -298,5 +298,77 @@ def get_follows(user_id):
             return jsonify({'status':'error', 'message':'this user has no followings'})
     except Exception as e:
         return jsonify({'status':'error', 'message':f'something went wrong: {e}'})
+
+
+@app.route("/api/reply", methods = ["POST"])
+def reply():
+    try:
+        data = request.json
+        user_id = data.get("user_id")
+        tweet_id = data.get("tweet_id")
+        text_content = data.get("text_content")
+        media_content = data.get("media_content")
+        if not user_id or not tweet_id or not text_content:
+            return jsonify({'status':'error', 'message':'user_id, tweet_id, text_content are required'})
+        user = User.query.filter_by(id = user_id).first()
+        if not user:
+            return jsonify({'status':'error', 'message':'user_id is not available'})
+        tweet = Tweet.query.filter_by(id = tweet_id).first()
+        if not tweet:
+            return jsonify({'status':'error', 'message':'tweet_id is not available'})
+        reply = Reply(user_id = user_id, tweet_id = tweet_id, text_content = text_content, media_content = media_content)
+        db.session.add(reply)
+        db.session.commit()
+        return jsonify({'status':'success', 'message':'replied succesfully'})
+    except Exception as e:
+        return jsonify({'status':'error', 'message':'Something went wrong'})
+
+
+@app.route("/api/<int:tweet_id>/replies", methods = ["GET"])
+def tweet_replies(tweet_id):
+    try:
+        tweet = Tweet.query.filter_by(id = tweet_id).first()
+        if not tweet:
+            return jsonify({'status':'error', 'message':'tweet_id is not available'})
+        replies = Reply.query.filter_by(tweet_id = tweet_id).all()
+        data = []
+        for i in replies:
+            data.append({'user_id':i.user_id, 'tweet_id':i.tweet_id, 'text_content':i.text_content})
+        if replies:
+            return jsonify({'status':'success', 'message':'replies data reseived succesfully', 'data':data})
+        else:
+            return jsonify({'status':'error', 'message':'this post has no replies'})
+    except:
+        return jsonify({'status':'error', 'message':'Something went wrong'})
+
+
+# tweetning barcha ma'lumotlarini olish + replylar, retweetlar, likelar
+@app.route("/api/<int:tweet_id>/data", methods = ["GET"])
+def tweet_data(tweet_id):
+    try:
+        tweet = Tweet.query.filter_by(id = tweet_id).first()
+        if not tweet:
+            return jsonify({'status':'error', 'message':'tweet_id is not found'})
+        
+        reply_count = Reply.query.filter_by(tweet_id = tweet_id).count()
+        retweet_count = Retweet.query.filter_by(tweet_id = tweet_id).count()
+        like_count = Like.query.filter_by(tweet_id = tweet_id).count()
+        view_count = View.query.filter_by(tweet_id = tweet_id).count()
+
+        data = {
+            'tweet_id':tweet_id,
+            'user_id':tweet.user_id,
+            'text_content':tweet.text_content,
+            'media_content':tweet.media_content,
+            'reply_count':reply_count,
+            'retweet_count':retweet_count,
+            'like_count':like_count,
+            'view_count':view_count
+        }
+        return jsonify({'status':'success', 'message':'tweet data received succesfully', 'data':data})
     
+    except:
+        return jsonify({'status':'error', 'message':'Something went wrong'})
+
+
 
