@@ -6,20 +6,21 @@ const Post = ({ username, handle, time, content, media, avatar }) => {
 		<div className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'>
 			<div className='flex space-x-4'>
 				{/* Avatar section */}
-				<div className='flex-shrink-0'>
-					<img
-						src={
-							avatar ||
-							'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'
-						}
-						alt={`${username}'s avatar`}
-						className='w-12 h-12 rounded-full object-cover'
-						onError={e => {
-							e.target.src =
-								'https://abs.twimg.com/sticky/default_profile_images/default_profile_400x400.png'
-						}}
-					/>
-				</div>
+				{avatar ? (
+					<div className='flex-shrink-0'>
+						<img
+							src={avatar}
+							alt={`${username}'s avatar`}
+							className='w-12 h-12 rounded-full object-cover'
+						/>
+					</div>
+				) : (
+					<div className='w-12 h-12 rounded-full bg-gray-700 flex justify-center items-center'>
+						<span className='font-bold text-xl'>
+							{JSON.parse(localStorage.getItem('user')).full_name.slice(0, 1)}
+						</span>
+					</div>
+				)}
 
 				{/* Content section */}
 				<div className='flex-grow'>

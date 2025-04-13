@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import Post from '../ui/Post'
 import PostInput from '../ui/PostInput'
+import Spinner from '../ui/Spinner'
+
 const ForYouContent = () => {
 	const [posts, setPosts] = useState([])
 	const [loading, setLoading] = useState(true)
@@ -22,11 +24,14 @@ const ForYouContent = () => {
 			}
 
 			const data = await response.json()
-			setPosts(data.tweets || [])
+
+			// Add setTimeout here
+			setTimeout(() => {
+				setPosts(data.tweets || [])
+				setLoading(false)
+			}, 1000) // 1seconds delay
 		} catch (err) {
 			setError(err.message)
-			console.error('Error fetching posts:', err)
-		} finally {
 			setLoading(false)
 		}
 	}
@@ -45,12 +50,16 @@ const ForYouContent = () => {
 		fetchPosts()
 	}, [])
 
-	if (loading) return <div>Loading...</div>
-	if (error) return <div>Error: {error}</div>
+	if (error) return <div className='text-red-500 p-4 text-center'>{error}</div>
 
 	return (
 		<div className='flex flex-col'>
 			<PostInput onPostSuccess={handleNewPost} />
+			{loading && (
+				<div className='flex justify-center items-center h-screen'>
+					<Spinner />
+				</div>
+			)}
 			<div className='space-y-4'>
 				{posts?.map(post => (
 					<Post

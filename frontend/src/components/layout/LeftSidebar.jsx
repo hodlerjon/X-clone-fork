@@ -10,18 +10,25 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import LogoutModal from '../ui/LogoutModal'
 import MoreModal from '../ui/MoreModal'
+import PostModal from '../ui/PostModal'
 
-const LeftSidebar = () => {
+const LeftSidebar = ({ openPostModal }) => {
 	const [isMoreModalOpen, setIsMoreModalOpen] = useState(false)
+	const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
 	const location = useLocation()
 
 	return (
-		<div className='w-64 p-4 border-r border-gray-800'>
-			<Link to='/' className='mb-6 block'>
+		<div className='sticky top-0 w-72 h-screen flex flex-col p-4 border-r border-gray-800'>
+			{/* Logo */}
+			<Link
+				to='/'
+				className='mb-4 px-4 hover:bg-gray-900/50 rounded-full inline-block'
+			>
 				<svg
 					viewBox='0 0 24 24'
-					className='h-8 w-8 text-white ml-4'
+					className='h-8 w-8 text-white'
 					fill='currentColor'
 				>
 					<g>
@@ -30,111 +37,124 @@ const LeftSidebar = () => {
 				</svg>
 			</Link>
 
-			<nav className='space-y-4'>
+			{/* Navigation */}
+			<nav className='flex-1 space-y-0.5'>
 				<NavItem
 					to='/'
-					icon={<Home className='h-6 w-6' />}
+					icon={<Home className='h-7 w-7' />}
 					text='Home'
 					active={location.pathname === '/'}
 				/>
 				<NavItem
 					to='/explore'
-					icon={<Search className='h-6 w-6' />}
+					icon={<Search className='h-7 w-7' />}
 					text='Explore'
 					active={location.pathname === '/explore'}
 				/>
 				<NavItem
 					to='/notifications'
-					icon={<Bell className='h-6 w-6' />}
+					icon={<Bell className='h-7 w-7' />}
 					text='Notifications'
 					active={location.pathname === '/notifications'}
 				/>
 				<NavItem
 					to='/messages'
-					icon={<Mail className='h-6 w-6' />}
+					icon={<Mail className='h-7 w-7' />}
 					text='Messages'
 					active={location.pathname === '/messages'}
 				/>
 				<NavItem
 					to='/bookmarks'
-					icon={<Bookmark className='h-6 w-6' />}
+					icon={<Bookmark className='h-7 w-7' />}
 					text='Bookmarks'
 					active={location.pathname === '/bookmarks'}
 				/>
 				<NavItem
 					to='/profile'
-					icon={<User className='h-6 w-6' />}
+					icon={<User className='h-7 w-7' />}
 					text='Profile'
 					active={location.pathname === '/profile'}
 				/>
-
 				<NavItem
-					icon={<CircleEllipsis className='h-6 w-6' />}
+					icon={<CircleEllipsis className='h-7 w-7' />}
 					text='More'
 					onClick={() => setIsMoreModalOpen(true)}
 				/>
 			</nav>
 
-			<div className='bg-white hover:bg-gray-300 transition-colors text-black font-bold py-3 cursor-pointer px-4 rounded-full w-full mt-6 mb-6'>
+			{/* Post Button */}
+			<button
+				className='bg-blue-500 hover:bg-blue-600 transition-all text-white font-bold py-3.5 px-4 rounded-full w-full my-4 active:scale-95'
+				onClick={openPostModal}
+			>
 				Post
+			</button>
+
+			{/* Profile Section */}
+			<div
+				className='mt-auto hover:bg-gray-900/50 rounded-full cursor-pointer transition-colors group'
+				onClick={() => setIsLogoutModalOpen(true)}
+			>
+				<div className='flex items-center justify-between p-3'>
+					<div className='flex items-center gap-3 min-w-0'>
+						<div className='w-10 h-10 rounded-full bg-gray-700 flex justify-center items-center flex-shrink-0'>
+							<span className='font-bold text-lg'>
+								{JSON.parse(localStorage.getItem('user'))?.full_name?.[0] ||
+									'U'}
+							</span>
+						</div>
+						<div className='min-w-0 flex-1'>
+							<h2 className='font-bold text-[15px] leading-5 text-white truncate'>
+								{JSON.parse(localStorage.getItem('user'))?.full_name}
+							</h2>
+							<p className='text-gray-500 text-[13px] truncate'>
+								@{JSON.parse(localStorage.getItem('user'))?.username}
+							</p>
+						</div>
+					</div>
+					<MoreHorizontal className='w-5 h-5 text-gray-500 group-hover:text-gray-400 transition-colors' />
+				</div>
 			</div>
 
+			{/* Modals */}
 			<MoreModal
 				isOpen={isMoreModalOpen}
 				onClose={() => setIsMoreModalOpen(false)}
 			/>
-			<div className=' mt-4 hover:bg-gray-900/50 rounded-full cursor-pointer transition-colors'>
-				<div className=' flex items-center justify-between'>
-					<div className='flex items-center space-x-3'>
-						<div className='w-10 h-10 rounded-full bg-gray-700 flex justify-center items-center'>
-							<span className='font-bold text-lg'>S</span>
-						</div>
-						<div className='flex-1'>
-							<h2 className='font-bold text-[15px] leading-5'>
-								Shukrullo Qurbonov
-							</h2>
-							<p className='text-gray-500 text-sm'>@ShukrulloQ36672</p>
-						</div>
-					</div>
-					<div className='flex items-center'>
-						<MoreHorizontal className='w-5 h-5' />
-					</div>
-				</div>
-			</div>
+			<LogoutModal
+				isOpen={isLogoutModalOpen}
+				onClose={() => setIsLogoutModalOpen(false)}
+			/>
 		</div>
 	)
 }
 
 const NavItem = ({ icon, text, active, to, onClick }) => {
+	const baseClass = `
+    flex items-center gap-4 p-3 rounded-full w-full cursor-pointer
+    transition-all hover:bg-gray-900/50 
+    ${active ? 'font-bold' : 'font-medium'}
+  `
+
 	if (onClick) {
 		return (
-			<div
-				onClick={onClick}
-				className='flex items-center space-x-4 hover:bg-white/10 p-3 rounded-full w-full cursor-pointer'
-			>
+			<div onClick={onClick} className={baseClass}>
 				{icon}
-				<span className={`text-xl ${active ? 'font-bold' : ''}`}>{text}</span>
+				<span className='text-xl'>{text}</span>
 			</div>
 		)
 	}
 
-	if (!to) {
-		return (
-			<div className='flex items-center space-x-4 hover:bg-white/10 p-3 rounded-full w-full cursor-pointer'>
-				{icon}
-				<span className={`text-xl ${active ? 'font-bold' : ''}`}>{text}</span>
-			</div>
-		)
-	}
-
-	return (
-		<Link
-			to={to}
-			className='flex items-center space-x-4 hover:bg-white/10 p-3 rounded-full w-full cursor-pointer'
-		>
+	return to ? (
+		<Link to={to} className={baseClass}>
 			{icon}
-			<span className={`text-xl ${active ? 'font-bold' : ''}`}>{text}</span>
+			<span className='text-xl'>{text}</span>
 		</Link>
+	) : (
+		<div className={baseClass}>
+			{icon}
+			<span className='text-xl'>{text}</span>
+		</div>
 	)
 }
 

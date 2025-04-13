@@ -11,8 +11,8 @@ import LeftSidebar from './components/layout/LeftSidebar'
 import RightSidebar from './components/layout/RightSidebar'
 import Bookmarks from './components/pages/Bookmarks'
 import Explore from './components/pages/Explore'
+import PostModal from './components/ui/PostModal'
 
-// import { Provider } from '@/components/ui/provider'
 import Messages from './components/pages/Messages'
 import Notifications from './components/pages/Notifications'
 import Profile from './components/pages/Profile'
@@ -32,6 +32,7 @@ function App() {
 function AppContent() {
 	const navigate = useNavigate()
 	const [isAuthenticated, setIsAuthenticated] = useState(false)
+	const [isPostModalOpen, setIsPostModalOpen] = useState(false)
 
 	useEffect(() => {
 		// Check authentication on initial load and page refresh
@@ -85,7 +86,9 @@ function AppContent() {
 				</Routes>
 			) : (
 				<div className='flex min-h-screen max-w-7xl mx-auto'>
-					{isAuthenticated && <LeftSidebar />}
+					{isAuthenticated && (
+						<LeftSidebar openPostModal={() => setIsPostModalOpen(true)} />
+					)}
 					<main className='flex-1'>
 						<Routes>
 							<Route
@@ -153,6 +156,10 @@ function AppContent() {
 					{isAuthenticated && <RightSidebar />}
 				</div>
 			)}
+			<PostModal
+				isOpen={isPostModalOpen}
+				onClose={() => setIsPostModalOpen(false)}
+			/>
 		</>
 	)
 }

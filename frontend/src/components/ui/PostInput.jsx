@@ -1,6 +1,6 @@
 import EmojiPicker from 'emoji-picker-react'
-import React, { use, useEffect, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
+import React, { useEffect, useRef, useState } from 'react'
 import { CiFaceSmile, CiImageOn } from 'react-icons/ci'
 import { HiOutlineGif } from 'react-icons/hi2'
 import { IoCloseOutline } from 'react-icons/io5'
@@ -157,7 +157,9 @@ const PostInput = ({ onPostSuccess }) => {
 		<div className='p-4 border-b border-gray-800'>
 			<div className='flex space-x-4'>
 				<div className='w-12 h-12 rounded-full bg-gray-700 flex justify-center items-center'>
-					<span className='font-bold text-xl'>S</span>
+					<span className='font-bold text-xl'>
+						{JSON.parse(localStorage.getItem('user')).full_name.slice(0, 1)}
+					</span>
 				</div>
 				<div className='flex-1'>
 					<textarea
