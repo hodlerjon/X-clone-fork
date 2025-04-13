@@ -45,7 +45,11 @@ const Post = ({ username, handle, time, content, media, avatar }) => {
 								className='rounded-2xl max-h-[510px] object-cover w-full border border-gray-800'
 								onError={e => {
 									console.error('Image failed to load:', media)
+									// Add fallback image or hide the element
 									e.target.style.display = 'none'
+									// Optional: Show error message
+									e.target.parentElement.innerHTML =
+										'<p class="text-gray-500">Image failed to load</p>'
 								}}
 							/>
 						</div>

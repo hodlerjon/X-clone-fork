@@ -17,6 +17,8 @@ lerna-debug.log*
 
 # Backend specific
 backend/uploads/
+backend/uploads/*
+!backend/uploads/.gitkeep
 backend/__pycache__/
 backend/myvenv/
 backend/instance/

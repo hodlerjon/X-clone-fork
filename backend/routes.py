@@ -119,17 +119,18 @@ def create_tweet():
                 'message': 'User not found'
             }), 404
 
-        # Modified image handling
         image_url = None
         if 'image' in request.files:
             file = request.files['image']
             if file and allowed_file(file.filename):
+                # Create a safe filename with timestamp
                 filename = secure_filename(f"{datetime.now().timestamp()}_{file.filename}")
-                # Ensure upload directory exists
-                if not os.path.exists(app.config['UPLOAD_FOLDER']):
-                    os.makedirs(app.config['UPLOAD_FOLDER'])
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-                # Update the URL to be accessible from frontend
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                
+                # Save the file
+                file.save(file_path)
+                
+                # Generate proper URL for the frontend
                 image_url = f"http://localhost:5000/uploads/{filename}"
 
         new_tweet = Tweet(
@@ -152,7 +153,7 @@ def create_tweet():
         db.session.rollback()
         return jsonify({
             'status': 'error',
-            'message': 'Internal server error'
+            'message': f'Internal server error: {str(e)}'
         }), 500
 
 # edit tweet
@@ -298,5 +299,5 @@ def get_follows(user_id):
             return jsonify({'status':'error', 'message':'this user has no followings'})
     except Exception as e:
         return jsonify({'status':'error', 'message':f'something went wrong: {e}'})
-    
+
 
