@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { X, Image, XCircle, Smile } from 'lucide-react'
 import EmojiPicker from 'emoji-picker-react'
@@ -11,6 +11,17 @@ const PostModal = ({ isOpen, onClose }) => {
 	const fileInputRef = useRef(null)
 	const MAX_CHARS = 280
 
+	useEffect(() => {
+		if (isOpen) {
+			document.body.style.overflow = 'hidden'
+		} else {
+			document.body.style.overflow = 'auto'
+		}
+
+		return () => {
+			document.body.style.overflow = 'auto'
+		}
+	}, [isOpen])
 	if (!isOpen) return null
 
 	const handleImageUpload = event => {

@@ -30,16 +30,7 @@ __pycache__/
 *$py.class
 **/venv/
 **/myvenv/
-**/.env
-.venv
-env/
-ENV/
-instance/
-uploads/
 myvenv/
-*.db
-*.sqlite
-*.sqlite3
 
 # Editor directories and files
 .vscode/*
@@ -62,3 +53,4 @@ ehthumbs.db
 Thumbs.db
 
 
+.vscode/

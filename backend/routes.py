@@ -266,7 +266,7 @@ def get_tweets():
     tweets_list = []
     for tweet in tweets:
         tweets_list.append(tweet.to_json())
-    return jsonify({'status':'success', 'tweets':tweets_list})
+    return jsonify({'status':'success', 'tweets':tweets_list[::-1]})
 
 
 @app.route("/api/follow", methods = ["POST"])
