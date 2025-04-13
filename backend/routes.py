@@ -290,3 +290,27 @@ def get_follows(user_id):
         return jsonify({'status':'error', 'message':f'something went wrong: {e}'})
     
 
+@app.route("/api/reply", methods = ["POST"])
+def reply():
+    try:
+        data = request.json
+        user_id = data.get("user_id")
+        tweet_id = data.get("tweet_id")
+        text_content = data.get("text_content")
+        media_content = data.get("media_content")
+        if not user_id or not tweet_id or not text_content:
+            return jsonify({'status':'error', 'message':'user_id, tweet_id, text_content are required'})
+        user = User.query.filter_by(id = user_id).first()
+        if not user:
+            return jsonify({'status':'error', 'message':'user_id is not available'})
+        tweet = Tweet.query.filter_by(id = tweet_id).first()
+        if not tweet:
+            return jsonify({'status':'error', 'message':'tweet_id is not available'})
+        reply = Reply(user_id = user_id, tweet_id = tweet_id, text_content = text_content, media_content = media_content)
+        db.session.add(reply)
+        db.session.commit()
+        return jsonify({'status':'success', 'message':'replied succesfully'})
+    except Exception as e:
+        return jsonify({'status':'error', 'message':f'Something went wrong: {e}'})
+
+
