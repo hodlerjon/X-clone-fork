@@ -89,3 +89,7 @@ class Group(db.Model):
     name = db.Column(db.String(100), nullable=False)
     members = db.relationship('User', secondary='group_members')
 
+class GroupMembers(db.Model):
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey('group.id'), primary_key=True)
+
