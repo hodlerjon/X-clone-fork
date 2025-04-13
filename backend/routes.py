@@ -1,4 +1,5 @@
-from app import app, db
+from app import app, db , socketio
+from flask_socketio import emit
 from flask import request, jsonify
 from models import *
 from werkzeug.utils import secure_filename
@@ -223,7 +224,7 @@ def get_tweets():
         tweets_list.append(tweet.to_dict())
     return jsonify({'status':'success', 'tweets':tweets_list})
 
-@app.route('/create_group', methods=['POST'])
+@app.route('/api/create_group', methods=['POST'])
 def create_group():
     data = request.get_json()
     name = data.get('name')
@@ -240,7 +241,7 @@ def create_group():
     db.session.commit()
     return jsonify({'message': 'Group created', 'group_id': group.id}), 201
 
-@app.route('/messages/<int:user_id>/<int:receiver_id>', methods=['GET'])
+@app.route('/api/messages/<int:user_id>/<int:receiver_id>', methods=['GET'])
 def get_messages(user_id, receiver_id):
     messages = Message.query.filter(
         ((Message.sender_id == user_id) & (Message.receiver_id == receiver_id)) |
@@ -259,7 +260,7 @@ def get_messages(user_id, receiver_id):
     } for msg in messages if str(user_id) not in msg.deleted_for.split(',')]), 200
 
 
-@app.route('/group_messages/<int:group_id>', methods=['GET'])
+@app.route('/api/group_messages/<int:group_id>', methods=['GET'])
 def get_group_messages(group_id):
     messages = Message.query.filter_by(group_id=group_id).order_by(Message.timestamp.asc()).all()
     return jsonify([{
@@ -273,7 +274,7 @@ def get_group_messages(group_id):
         'reactions': [{'user_id': r.user_id, 'emoji': r.emoji} for r in Reaction.query.filter_by(message_id=msg.id).all()]
     } for msg in messages]), 200
 
-@app.route('/upload_media', methods=['POST'])
+@app.route('/api/upload_media', methods=['POST'])
 def upload_media():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
@@ -285,3 +286,40 @@ def upload_media():
     filename = f"{datetime.utcnow().timestamp()}_{file.filename}"
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return jsonify({'media_url': f"/{app.config['UPLOAD_FOLDER']}/{filename}"}), 200
+
+@socketio.on('send_message')
+def handle_message(data):
+    sender_id = data['sender_id']
+    receiver_id = data.get('receiver_id')
+    group_id = data.get('group_id')
+    content = data.get('content')
+    media_url = data.get('media_url')
+
+    new_message = Message(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        group_id=group_id,
+        content=content,
+        media_url=media_url
+    )
+    db.session.add(new_message)
+    db.session.commit()
+
+    if receiver_id:
+        room = f"chat_{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
+    else:
+        room = f"group_{group_id}"
+
+    emit('receive_message', {
+        'id': new_message.id,
+        'sender_id': sender_id,
+        'receiver_id': receiver_id,
+        'group_id': group_id,
+        'content': content,
+        'media_url': media_url,
+        'timestamp': new_message.timestamp.isoformat(),
+        'is_read': new_message.is_read
+    }, room=room)
+
+    # Bildirishnoma yuborish
+    emit('notification', {'message': 'New message received', 'from_user_id': sender_id}, room=room)
