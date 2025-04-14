@@ -393,6 +393,25 @@ def handle_reaction(data):
     room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
     emit('reaction_added', {'message_id': message_id, 'user_id': user_id, 'emoji': emoji}, room=room)
 
+@socketio.on('delete_message')
+def handle_delete_message(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+    delete_for_all = data.get('delete_for_all', False)
+
+    message = Message.query.get(message_id)
+    if message.sender_id != user_id:
+        return
+
+    if delete_for_all:
+        db.session.delete(message)
+    else:
+        message.deleted_for = f"{message.deleted_for},{user_id}" if message.deleted_for else str(user_id)
+    db.session.commit()
+
+    room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+    emit('message_deleted', {'message_id': message_id, 'delete_for_all': delete_for_all}, room=room)
+
 
 @app.route('/api/block/<int:blocker_id>/<int:blocked_id>', methods=['POST'])
 def block_user(blocker_id, blocked_id):
