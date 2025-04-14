@@ -379,6 +379,20 @@ def handle_read_message(data):
         room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
         emit('message_read', {'message_id': message_id, 'is_read': True}, room=room)
 
+@socketio.on('add_reaction')
+def handle_reaction(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+    emoji = data['emoji']
+
+    reaction = Reaction(message_id=message_id, user_id=user_id, emoji=emoji)
+    db.session.add(reaction)
+    db.session.commit()
+
+    message = Message.query.get(message_id)
+    room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+    emit('reaction_added', {'message_id': message_id, 'user_id': user_id, 'emoji': emoji}, room=room)
+
 
 @app.route('/api/block/<int:blocker_id>/<int:blocked_id>', methods=['POST'])
 def block_user(blocker_id, blocked_id):
