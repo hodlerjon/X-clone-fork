@@ -412,6 +412,22 @@ def handle_delete_message(data):
     room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
     emit('message_deleted', {'message_id': message_id, 'delete_for_all': delete_for_all}, room=room)
 
+@socketio.on('edit_message')
+def handle_edit_message(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+    new_content = data['new_content']
+
+    message = Message.query.get(message_id)
+    if message.sender_id != user_id:
+        return
+
+    message.content = new_content
+    db.session.commit()
+
+    room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+    emit('message_edited', {'message_id': message_id, 'new_content': new_content}, room=room)
+
 
 @app.route('/api/block/<int:blocker_id>/<int:blocked_id>', methods=['POST'])
 def block_user(blocker_id, blocked_id):
