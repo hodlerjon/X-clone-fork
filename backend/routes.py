@@ -323,3 +323,14 @@ def handle_message(data):
 
     # Bildirishnoma yuborish
     emit('notification', {'message': 'New message received', 'from_user_id': sender_id}, room=room)
+
+
+@app.route('/api/block/<int:blocker_id>/<int:blocked_id>', methods=['POST'])
+def block_user(blocker_id, blocked_id):
+    if blocker_id == blocked_id:
+        return jsonify({'error': 'Cannot block yourself'}), 400
+
+    block = Block(blocker_id=blocker_id, blocked_id=blocked_id)
+    db.session.add(block)
+    db.session.commit()
+    return jsonify({'message': 'User blocked'}), 200
