@@ -366,6 +366,19 @@ def handle_message(data):
     # Bildirishnoma yuborish
     emit('notification', {'message': 'New message received', 'from_user_id': sender_id}, room=room)
 
+@socketio.on('read_message')
+def handle_read_message(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+
+    message = Message.query.get(message_id)
+    if message and (message.receiver_id == user_id or message.group_id):
+        message.is_read = True
+        db.session.commit()
+
+        room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+        emit('message_read', {'message_id': message_id, 'is_read': True}, room=room)
+
 
 @app.route('/api/block/<int:blocker_id>/<int:blocked_id>', methods=['POST'])
 def block_user(blocker_id, blocked_id):
