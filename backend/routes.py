@@ -334,3 +334,10 @@ def block_user(blocker_id, blocked_id):
     db.session.add(block)
     db.session.commit()
     return jsonify({'message': 'User blocked'}), 200
+
+@app.route('/api/unread_count/<int:user_id>', methods=['GET'])
+def unread_count(user_id):
+    unread = Message.query.filter(
+        (Message.receiver_id == user_id) & (Message.is_read == False)
+    ).count()
+    return jsonify({'unread_count': unread}), 200
