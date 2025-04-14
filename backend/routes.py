@@ -1,5 +1,5 @@
 from app import app, db , socketio
-from flask_socketio import emit
+from flask_socketio import emit, join_room, leave_room
 from flask import request, jsonify
 from models import *
 from werkzeug.utils import secure_filename
@@ -300,6 +300,20 @@ def on_join(data):
 
     join_room(room)
     emit('status', {'message': f'Joined room {room}'}, room=room)
+
+@socketio.on('leave')
+def on_leave(data):
+    user_id = data['user_id']
+    receiver_id = data.get('receiver_id')
+    group_id = data.get('group_id')
+
+    if receiver_id:
+        room = f"chat_{min(user_id, receiver_id)}_{max(user_id, receiver_id)}"
+    else:
+        room = f"group_{group_id}"
+
+    leave_room(room)
+    emit('status', {'message': f'Left room {room}'}, room=room)
 
 @socketio.on('typing')
 def handle_typing(data):
