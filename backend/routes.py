@@ -287,6 +287,20 @@ def upload_media():
     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return jsonify({'media_url': f"/{app.config['UPLOAD_FOLDER']}/{filename}"}), 200
 
+@socketio.on('join')
+def on_join(data):
+    user_id = data['user_id']
+    receiver_id = data.get('receiver_id')  # 1:1 chat uchun
+    group_id = data.get('group_id')  # Guruh chat uchun
+
+    if receiver_id:
+        room = f"chat_{min(user_id, receiver_id)}_{max(user_id, receiver_id)}"
+    else:
+        room = f"group_{group_id}"
+
+    join_room(room)
+    emit('status', {'message': f'Joined room {room}'}, room=room)
+
 @socketio.on('typing')
 def handle_typing(data):
     user_id = data['user_id']
