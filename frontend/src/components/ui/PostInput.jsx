@@ -35,11 +35,9 @@ const PostInput = ({ onPostSuccess }) => {
 				setShowEmojis(false)
 			}
 		}
-
 		document.addEventListener('mousedown', handleClickOutside)
 		return () => document.removeEventListener('mousedown', handleClickOutside)
 	}, [])
-
 	const handleChange = e => {
 		const text = e.target.value
 		if (text.length <= 280) {

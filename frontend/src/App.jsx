@@ -33,6 +33,45 @@ function AppContent() {
 	const navigate = useNavigate()
 	const [isAuthenticated, setIsAuthenticated] = useState(false)
 	const [isPostModalOpen, setIsPostModalOpen] = useState(false)
+	const [posts, setPosts] = useState([])
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState(null)
+
+	const fetchPosts = async () => {
+		try {
+			const response = await fetch(`${BASE_URL}/tweets`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+				},
+				credentials: 'include',
+			})
+
+			if (!response.ok) throw new Error('Failed to fetch posts')
+
+			const data = await response.json()
+			setTimeout(() => {
+				setPosts(data.tweets || [])
+				setLoading(false)
+			}, 1000)
+		} catch (err) {
+			setError(err.message)
+			setLoading(false)
+		}
+	}
+
+	useEffect(() => {
+		if (isAuthenticated) {
+			fetchPosts()
+		}
+	}, [isAuthenticated])
+
+	const handleNewPost = newPost => {
+		if (newPost && newPost.id) {
+			setPosts(prev => [newPost, ...prev])
+		}
+	}
 
 	useEffect(() => {
 		// Check authentication on initial load and page refresh
@@ -95,7 +134,12 @@ function AppContent() {
 								path='/'
 								element={
 									isAuthenticated ? (
-										<XHomepage />
+										<XHomepage
+											posts={posts}
+											onPostCreated={handleNewPost}
+											loading={loading}
+											error={error}
+										/>
 									) : (
 										<Navigate to='/register' replace />
 									)
@@ -159,6 +203,7 @@ function AppContent() {
 			<PostModal
 				isOpen={isPostModalOpen}
 				onClose={() => setIsPostModalOpen(false)}
+				onPostCreated={handleNewPost}
 			/>
 		</>
 	)

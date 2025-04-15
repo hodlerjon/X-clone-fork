@@ -61,7 +61,14 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({'status': 'success', 'message': 'succesfully created account'})
+    return jsonify({'status': 'success', 'message': 'succesfully created account', "user":{
+        'user_id': user.user_id,
+        'username': user.username,
+        'email': user.email,
+        'full_name': user.full_name,
+        'bio': user.bio,
+        'profile_image_url': user.profile_image_url
+    }})
 
 
 # login
