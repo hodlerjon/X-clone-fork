@@ -335,7 +335,7 @@ def reply():
         media_content = data.get("media_content")
         if not user_id or not tweet_id or not text_content:
             return jsonify({'status':'error', 'message':'user_id, tweet_id, text_content are required'})
-        user = User.query.filter_by(id = user_id).first()
+        user = User.query.filter_by(user_id = user_id).first()
         if not user:
             return jsonify({'status':'error', 'message':'user_id is not available'})
         tweet = Tweet.query.filter_by(id = tweet_id).first()
