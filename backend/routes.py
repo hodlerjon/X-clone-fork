@@ -1,5 +1,5 @@
 from app import app, db
-from flask import request, jsonify
+from flask import request, jsonify, session
 from models import *
 from werkzeug.utils import secure_filename
 import os
@@ -61,7 +61,14 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    return jsonify({'status': 'success', 'message': 'succesfully created account'})
+    return jsonify({'status': 'success', 'message': 'succesfully created account', "user":{
+        'user_id': user.user_id,
+        'username': user.username,
+        'email': user.email,
+        'full_name': user.full_name,
+        'bio': user.bio,
+        'profile_image_url': user.profile_image_url
+    }})
 
 
 # login
@@ -97,6 +104,22 @@ def login():
         })
     else:
         return jsonify({'status': 'error', 'message': 'credentials do not match'})
+
+
+@app.route("/api/auth/logout", methods=["POST"])
+def logout():
+    try:
+        response = jsonify({
+            'status': 'success',
+            'message': 'Successfully logged out'
+        })
+        return response, 200
+    
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Logout failed: {str(e)}'
+        }), 500
 
 
 # create tweet
@@ -136,7 +159,8 @@ def create_tweet():
         new_tweet = Tweet(
             user_id=user_id,
             text_content=content,
-            media_content=image_url
+            media_content=image_url,
+            # user=user
         )
         
         db.session.add(new_tweet)
@@ -249,7 +273,7 @@ def get_tweets():
     tweets_list = []
     for tweet in tweets:
         tweets_list.append(tweet.to_json())
-    return jsonify({'status':'success', 'tweets':tweets_list})
+    return jsonify({'status':'success', 'tweets':tweets_list[::-1]})
 
 
 @app.route("/api/follow", methods = ["POST"])

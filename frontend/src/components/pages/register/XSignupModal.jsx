@@ -35,10 +35,8 @@ function XSignupModal({ onClose }) {
 				localStorage.setItem(
 					'user',
 					JSON.stringify({
-						username: formData.username,
-						email: formData.email,
+						...data.user,
 						isAuthenticated: true,
-						user_id: formData.user_id,
 					})
 				)
 				console.log('Registration successful:', data) // Добавляем лог

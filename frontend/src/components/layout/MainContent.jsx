@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
-import ForYouContent from './ForYouContent'
 import FollowingContent from './FollowContent'
-const MainContent = () => {
+import ForYouContent from './ForYouContent'
+const MainContent = ({ posts, loading, error, onPostCreated }) => {
 	const [activeTab, setActiveTab] = useState('For you')
 
 	const handleTabClick = tabName => {
@@ -36,7 +36,16 @@ const MainContent = () => {
 			</div>
 
 			<div className='min-h-screen'>
-				{activeTab === 'For you' ? <ForYouContent /> : <FollowingContent />}
+				{activeTab === 'For you' ? (
+					<ForYouContent
+						posts={posts}
+						loading={loading}
+						error={error}
+						onPostCreated={onPostCreated}
+					/>
+				) : (
+					<FollowingContent />
+				)}
 			</div>
 		</div>
 	)
