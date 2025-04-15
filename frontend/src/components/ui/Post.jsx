@@ -58,7 +58,7 @@ const Post = ({ username, handle, time, content, media, avatar, id}) => {
 
 					{/* Interaction icons */}
 					<div className='mt-3'>
-						<Icons tweetId='2' />
+						<Icons tweetId={id} />
 					</div>
 				</div>
 			</div>

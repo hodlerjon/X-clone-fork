@@ -235,7 +235,7 @@ def like_tweet():
     if not user_id or not tweet_id:
         return jsonify({'status':'error', 'message':'user_id and tweet_id are required'})
     
-    user = User.query.filter_by(id=user_id).first()
+    user = User.query.filter_by(user_id=user_id).first()
     if not user:
         return jsonify({'status':'error', 'message':'user_id not available'})
     

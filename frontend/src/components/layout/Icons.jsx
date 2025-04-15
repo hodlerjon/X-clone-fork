@@ -222,7 +222,7 @@ const Icons = ({ tweetId }) => {
 }
 
 Icons.propTypes = {
-    tweetId: PropTypes.string.isRequired
+    tweetId: PropTypes.number.isRequired
 }
 
 export default Icons
