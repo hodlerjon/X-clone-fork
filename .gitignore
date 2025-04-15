@@ -10,4 +10,10 @@ __pycache__/
 
 
 
+*.pyo
+*.pyd
+
+myvenv/
+
+
 env/
