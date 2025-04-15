@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom'
 function XSignupModal({ onClose }) {
 	const navigate = useNavigate()
 	const [formData, setFormData] = useState({
-		username: '', // Changed from name to username to match backend
+		username: '',
 		email: '',
 		password: '',
 		full_name: '',
 		bio: '',
-		profile_image_url: '', // Optional
+		user_id: Math.random().toString(36).substring(2, 15),
+		profile_image_url: '',
 	})
 	const [error, setError] = useState('')
 
@@ -22,28 +23,31 @@ function XSignupModal({ onClose }) {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
+					Accept: 'application/json', // Добавляем Accept header
 				},
+				credentials: 'include', // Добавляем поддержку куки
 				body: JSON.stringify(formData),
 			})
 
 			const data = await response.json()
-
+			console.log('Response data:', data) // Добавляем лог ответа
 			if (data.status === 'success') {
-				// Store user data in localStorage
 				localStorage.setItem(
 					'user',
 					JSON.stringify({
-						username: formData.username,
-						email: formData.email,
+						...data.user,
 						isAuthenticated: true,
 					})
 				)
-				onClose() // Close the modal
-				navigate('/') // Redirect to home page
+				console.log('Registration successful:', data) // Добавляем лог
+				onClose()
+				navigate('/')
 			} else {
-				setError(data.message)
+				console.error('Registration failed:', data) // Добавляем лог ошибки
+				setError(data.message || 'Registration failed')
 			}
 		} catch (err) {
+			console.error('Network error:', err) // Добавляем детальный лог ошибки
 			setError('Something went wrong. Please try again.')
 		}
 	}

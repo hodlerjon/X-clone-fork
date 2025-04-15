@@ -1,15 +1,17 @@
 // App.jsx
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google'
 import { jwtDecode } from 'jwt-decode'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import XLogo from '../ui/Xlogo'
 import XSignupModal from '../pages/register/XSignupModal'
+import XLoginModal from './login/XLoginModal'
 
 function Register() {
 	const navigate = useNavigate()
 	const [error, setError] = useState('')
 	const [isModalOpen, setIsModalOpen] = useState(false)
+	const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
 	const openModal = () => setIsModalOpen(true)
 	const closeModal = () => setIsModalOpen(false)
@@ -148,7 +150,10 @@ function Register() {
 
 						<div className='mt-10'>
 							<p className='text-gray-500 mb-4'>Уже зарегистрированы?</p>
-							<button className='w-full border border-gray-700 text-blue-500 hover:bg-blue-900/20 px-4 py-3 rounded-full font-medium transition-colors'>
+							<button
+								onClick={() => setIsLoginModalOpen(true)}
+								className='w-full border border-gray-700 text-blue-500 hover:bg-blue-900/20 px-4 py-3 rounded-full font-medium transition-colors'
+							>
 								Войти
 							</button>
 						</div>
@@ -219,6 +224,9 @@ function Register() {
 
 			{/* Modal */}
 			{isModalOpen && <XSignupModal onClose={closeModal} />}
+			{isLoginModalOpen && (
+				<XLoginModal onClose={() => setIsLoginModalOpen(false)} />
+			)}
 		</div>
 	)
 }

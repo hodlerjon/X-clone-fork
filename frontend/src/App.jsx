@@ -11,14 +11,16 @@ import LeftSidebar from './components/layout/LeftSidebar'
 import RightSidebar from './components/layout/RightSidebar'
 import Bookmarks from './components/pages/Bookmarks'
 import Explore from './components/pages/Explore'
+import PostModal from './components/ui/PostModal'
 
-// import { Provider } from '@/components/ui/provider'
 import Messages from './components/pages/Messages'
 import Notifications from './components/pages/Notifications'
 import Profile from './components/pages/Profile'
 import Register from './components/pages/Register'
 import XHomepage from './components/pages/Xhomepage'
 
+export const BASE_URL =
+	import.meta.env.MODE === 'development' ? 'http://127.0.0.1:5000/api' : '/api'
 function App() {
 	return (
 		<Router>
@@ -30,12 +32,85 @@ function App() {
 function AppContent() {
 	const navigate = useNavigate()
 	const [isAuthenticated, setIsAuthenticated] = useState(false)
+	const [isPostModalOpen, setIsPostModalOpen] = useState(false)
+	const [posts, setPosts] = useState([])
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState(null)
+
+	const fetchPosts = async () => {
+		try {
+			const response = await fetch(`${BASE_URL}/tweets`, {
+				method: 'GET',
+				headers: {
+					'Content-Type': 'application/json',
+					Accept: 'application/json',
+				},
+				credentials: 'include',
+			})
+
+			if (!response.ok) throw new Error('Failed to fetch posts')
+
+			const data = await response.json()
+			setTimeout(() => {
+				setPosts(data.tweets || [])
+				setLoading(false)
+			}, 1000)
+		} catch (err) {
+			setError(err.message)
+			setLoading(false)
+		}
+	}
 
 	useEffect(() => {
-		// Check if user is authenticated
-		const user = localStorage.getItem('user')
-		setIsAuthenticated(!!user)
-	}, [])
+		if (isAuthenticated) {
+			fetchPosts()
+		}
+	}, [isAuthenticated])
+
+	const handleNewPost = newPost => {
+		if (newPost && newPost.id) {
+			setPosts(prev => [newPost, ...prev])
+		}
+	}
+
+	useEffect(() => {
+		// Check authentication on initial load and page refresh
+		const checkAuth = () => {
+			const userData = localStorage.getItem('user')
+			if (userData) {
+				try {
+					const user = JSON.parse(userData)
+					if (user && user.isAuthenticated) {
+						setIsAuthenticated(true)
+						// If on register/login page, redirect to home
+						const isAuthPage = ['/register', '/login'].includes(
+							window.location.pathname
+						)
+						if (isAuthPage) {
+							navigate('/')
+						}
+					} else {
+						handleLogout()
+					}
+				} catch (error) {
+					handleLogout()
+				}
+			} else {
+				handleLogout()
+			}
+		}
+
+		const handleLogout = () => {
+			localStorage.removeItem('user')
+			setIsAuthenticated(false)
+			// Only redirect to register if not already there
+			if (!['/register', '/login'].includes(window.location.pathname)) {
+				navigate('/register')
+			}
+		}
+
+		checkAuth()
+	}, [navigate])
 
 	// Public routes that don't require authentication
 	const publicRoutes = ['/register', '/login']
@@ -50,14 +125,21 @@ function AppContent() {
 				</Routes>
 			) : (
 				<div className='flex min-h-screen max-w-7xl mx-auto'>
-					{isAuthenticated && <LeftSidebar />}
+					{isAuthenticated && (
+						<LeftSidebar openPostModal={() => setIsPostModalOpen(true)} />
+					)}
 					<main className='flex-1'>
 						<Routes>
 							<Route
 								path='/'
 								element={
 									isAuthenticated ? (
-										<XHomepage />
+										<XHomepage
+											posts={posts}
+											onPostCreated={handleNewPost}
+											loading={loading}
+											error={error}
+										/>
 									) : (
 										<Navigate to='/register' replace />
 									)
@@ -118,6 +200,11 @@ function AppContent() {
 					{isAuthenticated && <RightSidebar />}
 				</div>
 			)}
+			<PostModal
+				isOpen={isPostModalOpen}
+				onClose={() => setIsPostModalOpen(false)}
+				onPostCreated={handleNewPost}
+			/>
 		</>
 	)
 }
