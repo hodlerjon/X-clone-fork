@@ -1,7 +1,7 @@
 import React from 'react'
 import Icons from '../layout/Icons'
 
-const Post = ({ username, handle, time, content, media, avatar }) => {
+const Post = ({ username, handle, time, content, media, avatar, id}) => {
 	return (
 		<div className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'>
 			<div className='flex space-x-4'>
@@ -58,7 +58,7 @@ const Post = ({ username, handle, time, content, media, avatar }) => {
 
 					{/* Interaction icons */}
 					<div className='mt-3'>
-						<Icons />
+						<Icons tweetId='2' />
 					</div>
 				</div>
 			</div>
