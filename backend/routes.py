@@ -134,7 +134,7 @@ def create_tweet():
                 'status': 'error',
                 'message': 'Content and user_id are required'
             }), 400
-        
+        print(user_id)
         user = User.query.filter_by(user_id=user_id).first()
         if not user:
             return jsonify({
