@@ -1,4 +1,4 @@
-from app import app, db , socketio
+from app import app, db, socketio
 from flask_socketio import emit, join_room, leave_room
 from flask import request, jsonify, session
 from models import *
