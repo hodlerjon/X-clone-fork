@@ -18,6 +18,7 @@ const ForYouContent = ({ posts, loading, error, onPostCreated }) => {
 				{posts?.map(post => (
 					<Post
 						key={post.id}
+						id={post.id}
 						username={post?.user?.username}
 						handle={`@${post?.user?.username}`}
 						time={new Date(post.created_at).toLocaleString()}

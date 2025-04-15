@@ -1,4 +1,5 @@
-from app import app, db
+from app import app, db, socketio
+from flask_socketio import emit, join_room, leave_room
 from flask import request, jsonify, session
 from models import *
 from werkzeug.utils import secure_filename
@@ -134,7 +135,7 @@ def create_tweet():
                 'status': 'error',
                 'message': 'Content and user_id are required'
             }), 400
-        
+        print(user_id)
         user = User.query.filter_by(user_id=user_id).first()
         if not user:
             return jsonify({
@@ -235,7 +236,7 @@ def like_tweet():
     if not user_id or not tweet_id:
         return jsonify({'status':'error', 'message':'user_id and tweet_id are required'})
     
-    user = User.query.filter_by(id=user_id).first()
+    user = User.query.filter_by(user_id=user_id).first()
     if not user:
         return jsonify({'status':'error', 'message':'user_id not available'})
     
@@ -335,7 +336,7 @@ def reply():
         media_content = data.get("media_content")
         if not user_id or not tweet_id or not text_content:
             return jsonify({'status':'error', 'message':'user_id, tweet_id, text_content are required'})
-        user = User.query.filter_by(id = user_id).first()
+        user = User.query.filter_by(user_id = user_id).first()
         if not user:
             return jsonify({'status':'error', 'message':'user_id is not available'})
         tweet = Tweet.query.filter_by(id = tweet_id).first()
@@ -395,3 +396,226 @@ def tweet_data(tweet_id):
     except:
         return jsonify({'status':'error', 'message':'Something went wrong'})
 
+      
+      
+@app.route('/api/create_group', methods=['POST'])
+def create_group():
+    data = request.get_json()
+    name = data.get('name')
+    member_ids = data.get('member_ids')  # [1, 2, 3]
+
+    group = Group(name=name)
+    db.session.add(group)
+    db.session.flush()
+
+    for user_id in member_ids:
+        member = GroupMembers(user_id=user_id, group_id=group.id)
+        db.session.add(member)
+
+    db.session.commit()
+    return jsonify({'message': 'Group created', 'group_id': group.id}), 201
+
+@app.route('/api/messages/<int:user_id>/<int:receiver_id>', methods=['GET'])
+def get_messages(user_id, receiver_id):
+    messages = Message.query.filter(
+        ((Message.sender_id == user_id) & (Message.receiver_id == receiver_id)) |
+        ((Message.sender_id == receiver_id) & (Message.receiver_id == user_id))
+    ).filter(Message.group_id == None).order_by(Message.timestamp.asc()).all()
+
+    return jsonify([{
+        'id': msg.id,
+        'sender_id': msg.sender_id,
+        'receiver_id': msg.receiver_id,
+        'content': msg.content,
+        'media_url': msg.media_url,
+        'timestamp': msg.timestamp.isoformat(),
+        'is_read': msg.is_read,
+        'reactions': [{'user_id': r.user_id, 'emoji': r.emoji} for r in Reaction.query.filter_by(message_id=msg.id).all()]
+    } for msg in messages if str(user_id) not in msg.deleted_for.split(',')]), 200
+
+
+@app.route('/api/group_messages/<int:group_id>', methods=['GET'])
+def get_group_messages(group_id):
+    messages = Message.query.filter_by(group_id=group_id).order_by(Message.timestamp.asc()).all()
+    return jsonify([{
+        'id': msg.id,
+        'sender_id': msg.sender_id,
+        'group_id': msg.group_id,
+        'content': msg.content,
+        'media_url': msg.media_url,
+        'timestamp': msg.timestamp.isoformat(),
+        'is_read': msg.is_read,
+        'reactions': [{'user_id': r.user_id, 'emoji': r.emoji} for r in Reaction.query.filter_by(message_id=msg.id).all()]
+    } for msg in messages]), 200
+
+@app.route('/api/upload_media', methods=['POST'])
+def upload_media():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    filename = f"{datetime.utcnow().timestamp()}_{file.filename}"
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return jsonify({'media_url': f"/{app.config['UPLOAD_FOLDER']}/{filename}"}), 200
+
+@socketio.on('join')
+def on_join(data):
+    user_id = data['user_id']
+    receiver_id = data.get('receiver_id')  # 1:1 chat uchun
+    group_id = data.get('group_id')  # Guruh chat uchun
+
+    if receiver_id:
+        room = f"chat_{min(user_id, receiver_id)}_{max(user_id, receiver_id)}"
+    else:
+        room = f"group_{group_id}"
+
+    join_room(room)
+    emit('status', {'message': f'Joined room {room}'}, room=room)
+
+@socketio.on('leave')
+def on_leave(data):
+    user_id = data['user_id']
+    receiver_id = data.get('receiver_id')
+    group_id = data.get('group_id')
+
+    if receiver_id:
+        room = f"chat_{min(user_id, receiver_id)}_{max(user_id, receiver_id)}"
+    else:
+        room = f"group_{group_id}"
+
+    leave_room(room)
+    emit('status', {'message': f'Left room {room}'}, room=room)
+
+@socketio.on('typing')
+def handle_typing(data):
+    user_id = data['user_id']
+    receiver_id = data.get('receiver_id')
+    group_id = data.get('group_id')
+
+    if receiver_id:
+        room = f"chat_{min(user_id, receiver_id)}_{max(user_id, receiver_id)}"
+    else:
+        room = f"group_{group_id}"
+
+    user = User.query.get(user_id)
+    emit('typing', {'username': user.username, 'is_typing': True}, room=room, skip_sid=request.sid)
+
+@socketio.on('send_message')
+def handle_message(data):
+    sender_id = data['sender_id']
+    receiver_id = data.get('receiver_id')
+    group_id = data.get('group_id')
+    content = data.get('content')
+    media_url = data.get('media_url')
+
+    new_message = Message(
+        sender_id=sender_id,
+        receiver_id=receiver_id,
+        group_id=group_id,
+        content=content,
+        media_url=media_url
+    )
+    db.session.add(new_message)
+    db.session.commit()
+
+    if receiver_id:
+        room = f"chat_{min(sender_id, receiver_id)}_{max(sender_id, receiver_id)}"
+    else:
+        room = f"group_{group_id}"
+
+    emit('receive_message', {
+        'id': new_message.id,
+        'sender_id': sender_id,
+        'receiver_id': receiver_id,
+        'group_id': group_id,
+        'content': content,
+        'media_url': media_url,
+        'timestamp': new_message.timestamp.isoformat(),
+        'is_read': new_message.is_read
+    }, room=room)
+
+    # Bildirishnoma yuborish
+    emit('notification', {'message': 'New message received', 'from_user_id': sender_id}, room=room)
+
+@socketio.on('read_message')
+def handle_read_message(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+
+    message = Message.query.get(message_id)
+    if message and (message.receiver_id == user_id or message.group_id):
+        message.is_read = True
+        db.session.commit()
+
+        room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+        emit('message_read', {'message_id': message_id, 'is_read': True}, room=room)
+
+@socketio.on('add_reaction')
+def handle_reaction(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+    emoji = data['emoji']
+
+    reaction = Reaction(message_id=message_id, user_id=user_id, emoji=emoji)
+    db.session.add(reaction)
+    db.session.commit()
+
+    message = Message.query.get(message_id)
+    room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+    emit('reaction_added', {'message_id': message_id, 'user_id': user_id, 'emoji': emoji}, room=room)
+
+@socketio.on('delete_message')
+def handle_delete_message(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+    delete_for_all = data.get('delete_for_all', False)
+
+    message = Message.query.get(message_id)
+    if message.sender_id != user_id:
+        return
+
+    if delete_for_all:
+        db.session.delete(message)
+    else:
+        message.deleted_for = f"{message.deleted_for},{user_id}" if message.deleted_for else str(user_id)
+    db.session.commit()
+
+    room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+    emit('message_deleted', {'message_id': message_id, 'delete_for_all': delete_for_all}, room=room)
+
+@socketio.on('edit_message')
+def handle_edit_message(data):
+    message_id = data['message_id']
+    user_id = data['user_id']
+    new_content = data['new_content']
+
+    message = Message.query.get(message_id)
+    if message.sender_id != user_id:
+        return
+
+    message.content = new_content
+    db.session.commit()
+
+    room = f"chat_{min(message.sender_id, message.receiver_id)}_{max(message.sender_id, message.receiver_id)}" if message.receiver_id else f"group_{message.group_id}"
+    emit('message_edited', {'message_id': message_id, 'new_content': new_content}, room=room)
+
+
+@app.route('/api/block/<int:blocker_id>/<int:blocked_id>', methods=['POST'])
+def block_user(blocker_id, blocked_id):
+    if blocker_id == blocked_id:
+        return jsonify({'error': 'Cannot block yourself'}), 400
+
+    block = Block(blocker_id=blocker_id, blocked_id=blocked_id)
+    db.session.add(block)
+    db.session.commit()
+    return jsonify({'message': 'User blocked'}), 200
+
+@app.route('/api/unread_count/<int:user_id>', methods=['GET'])
+def unread_count(user_id):
+    unread = Message.query.filter(
+        (Message.receiver_id == user_id) & (Message.is_read == False)
+    ).count()
+    return jsonify({'unread_count': unread}), 200
