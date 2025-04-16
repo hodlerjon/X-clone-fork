@@ -6,22 +6,22 @@ const Post = ({ username, handle, time, content, media, avatar, id }) => {
 		<div className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'>
 			<div className='flex space-x-4'>
 				{/* Avatar section */}
-				{avatar ? (
-					<div className='flex-shrink-0'>
+				<div className='flex-shrink-0'>
+					{avatar ? (
 						<img
 							src={avatar}
 							alt={`${username}'s avatar`}
-							className='w-12 h-12 rounded-full object-cover'
+							className='w-12 h-12 rounded-full object-cover min-w-[3rem] min-h-[3rem]'
 						/>
-					</div>
-				) : (
-					<div className='w-12 h-12 rounded-full bg-gray-700 flex justify-center items-center'>
-						<span className='font-bold text-xl'>
-							{username.charAt(0).toUpperCase()}
-						</span>
-					</div>
-				)}
-
+					) : (
+						<div className='w-12 h-12 min-w-[3rem] min-h-[3rem] rounded-full bg-gray-700 flex justify-center items-center'>
+							<span className='font-bold text-xl'>
+								{username.charAt(0).toUpperCase()}
+							</span>
+						</div>
+					)}
+				</div>
+	
 				{/* Content section */}
 				<div className='flex-grow'>
 					{/* Header */}
@@ -33,10 +33,12 @@ const Post = ({ username, handle, time, content, media, avatar, id }) => {
 							{time}
 						</span>
 					</div>
-
+	
 					{/* Tweet content */}
-					<p className='mt-2 text-left text-[15px] leading-normal'>{content}</p>
-
+					<div className="break-words whitespace-pre-wrap max-w-full overflow-hidden text-pretty">
+						<p className='mt-2 text-left text-[15px] leading-normal'>{content}</p>
+					</div>
+	
 					{/* Media */}
 					{media && (
 						<div className='mt-3'>
@@ -46,16 +48,14 @@ const Post = ({ username, handle, time, content, media, avatar, id }) => {
 								className='rounded-2xl max-h-[510px] object-cover w-full border border-gray-800'
 								onError={e => {
 									console.error('Image failed to load:', media)
-									// Add fallback image or hide the element
 									e.target.style.display = 'none'
-									// Optional: Show error message
 									e.target.parentElement.innerHTML =
 										'<p class="text-gray-500">Image failed to load</p>'
 								}}
 							/>
 						</div>
 					)}
-
+	
 					{/* Interaction icons */}
 					<div className='mt-3'>
 						<Icons tweetId={id} />
@@ -64,6 +64,7 @@ const Post = ({ username, handle, time, content, media, avatar, id }) => {
 			</div>
 		</div>
 	)
+	
 }
 
 export default Post
