@@ -56,6 +56,7 @@ const Icons = ({ tweetId }) => {
 					})
 					setIsLiked(result.is_liked || false) // 💡 здесь result.is_liked, не result.data.is_liked
 					setIsRetweeted(result.is_retweeted || false) // если есть такая логика
+					setBoookmarked(result.is_bookmarked || false) // если есть такая логика
 				} else {
 					throw new Error(result.message || 'Failed to fetch tweet data')
 				}
