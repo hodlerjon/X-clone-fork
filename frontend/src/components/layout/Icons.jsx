@@ -118,7 +118,7 @@ const Icons = ({ tweetId }) => {
 		}
 
 		try {
-			const response = await fetch('http://localhost:5000/api/retweets', {
+			const response = await fetch('http://localhost:5000/api/retweet', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
