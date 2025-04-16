@@ -135,7 +135,6 @@ def create_tweet():
                 'status': 'error',
                 'message': 'Content and user_id are required'
             }), 400
-        print(user_id)
         user = User.query.filter_by(user_id=user_id).first()
         if not user:
             return jsonify({
@@ -241,29 +240,34 @@ def like_tweet():
         return jsonify({'status':'error', 'message':'user_id not available'})
     
     tweet = Tweet.query.filter_by(id=tweet_id).first()
+   
     if not tweet:
         return jsonify({'status':'error', 'message':'tweet_id not available'})
+
+
+    liked_tweet = Like.query.filter_by(user_id=user_id, tweet_id=tweet_id).first()
     
-    if tweet in user.liked_tweets:
-        user.liked_tweets.remove(tweet)
+    if liked_tweet:
+        db.session.delete(liked_tweet)
         db.session.commit()
         return jsonify({'status':'success', 'message':'tweet unliked successfully'})
     else:
-        user.liked_tweets.append(tweet)
+        like = Like(user_id=user_id, tweet_id=tweet_id)
+        db.session.add(like)
         db.session.commit()
-        return jsonify({'status':'success', 'message':'tweet liked successfully'})
+        return jsonify({'status':'success', 'message':'tweet liked successfully'} )
     
 # like bosgan tweetimizni olish
 # get liked tweets
 @app.route("/api/likes/<user_id>", methods = ["GET"])
 def get_liked_tweets(user_id):
-    user = User.query.filter_by(id=user_id).first()
+    user = User.query.filter_by(user_id=user_id).first()
     if not user:
         return jsonify({'status':'error', 'message':'user_id not available'})
-    liked_tweets = user.liked_tweets
+    liked_tweets = Like.query.filter_by(user_id=user_id).all()
     liked_tweets_list = []
-    for tweet in liked_tweets:
-        liked_tweets_list.append(tweet.to_dict())
+    for like in liked_tweets:
+        liked_tweets_list.append(like.to_json())
     return jsonify({'status':'success', 'liked_tweets':liked_tweets_list})
 
 # Barcha tweetlarni olish
@@ -369,34 +373,81 @@ def tweet_replies(tweet_id):
 
 
 # tweetning barcha ma'lumotlarini olish + replylar, retweetlar, likelar
-@app.route("/api/<int:tweet_id>/data", methods = ["GET"])
+@app.route("/api/<int:tweet_id>/data", methods=["GET"])
 def tweet_data(tweet_id):
     try:
-        tweet = Tweet.query.filter_by(id = tweet_id).first()
+        tweet = Tweet.query.filter_by(id=tweet_id).first()
         if not tweet:
-            return jsonify({'status':'error', 'message':'tweet_id is not found'})
-        
-        reply_count = Reply.query.filter_by(tweet_id = tweet_id).count()
-        retweet_count = Retweet.query.filter_by(tweet_id = tweet_id).count()
-        like_count = Like.query.filter_by(tweet_id = tweet_id).count()
-        view_count = View.query.filter_by(tweet_id = tweet_id).count()
+            return jsonify({'status': 'error', 'message': 'Tweet not found'})
+
+        current_user_id = request.args.get("user_id")
+        if not current_user_id:
+            return jsonify({'status': 'error', 'message': 'user_id is missing'})
+        try:
+            view_count = View.query.filter_by(user_id=current_user_id, tweet_id=tweet_id).first()
+            if not view_count:
+                view = View(user_id=current_user_id, tweet_id=tweet_id)
+                db.session.add(view)
+                db.session.commit()
+        except Exception as e:
+            print(f"Error adding view: {str(e)}")
+            db.session.rollback()
+
+        reply_count = Reply.query.filter_by(tweet_id=tweet_id).count()
+        retweet_count = Retweet.query.filter_by(tweet_id=tweet_id).count()
+        like_count = Like.query.filter_by(tweet_id=tweet_id).count()
+        view_count = View.query.filter_by(tweet_id=tweet_id).count()
+
+        is_liked = Like.query.filter_by(user_id=current_user_id, tweet_id=tweet_id).first() is not None
 
         data = {
-            'tweet_id':tweet_id,
-            'user_id':tweet.user_id,
-            'text_content':tweet.text_content,
-            'media_content':tweet.media_content,
-            'reply_count':reply_count,
-            'retweet_count':retweet_count,
-            'like_count':like_count,
-            'view_count':view_count
+            'tweet_id': tweet_id,
+            'user_id': tweet.user_id,
+            'text_content': tweet.text_content,
+            'media_content': tweet.media_content,
+            'reply_count': reply_count,
+            'retweet_count': retweet_count,
+            'like_count': like_count,
+            'view_count': view_count
         }
-        return jsonify({'status':'success', 'message':'tweet data received succesfully', 'data':data})
-    
-    except:
-        return jsonify({'status':'error', 'message':'Something went wrong'})
 
-      
+        return jsonify({
+            'status': 'success',
+            'message': 'Tweet data fetched successfully',
+            'data': data,
+            'is_liked': is_liked
+        })
+    
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+
+@app.route('/api/bookmarks', methods=['POST'])
+def add_to_bookmark():
+    data = request.get_json()  
+    user_id = data.get('user_id')
+    tweet_id = data.get('tweet_id')
+    if not user_id or not tweet_id:
+        return jsonify({'status': 'error', 'message': 'user_id and tweet_id are required'}), 400
+    user = User.query.filter_by(user_id=user_id).first()
+    if not user:
+        return jsonify({'status': 'error', 'message': 'user_id not available'}), 404
+    tweet = Tweet.query.filter_by(id=tweet_id).first()
+    if not tweet:
+        return jsonify({'status': 'error', 'message': 'tweet_id not available'}), 404
+    bookmark = Bookmark.query.filter_by(user_id=user_id, tweet_id=tweet_id).first()
+    is_bookmarked = Bookmark.query.filter_by(user_id=user_id, tweet_id=tweet_id).first() is not None
+    if bookmark:
+        db.session.delete(bookmark)
+        db.session.commit()
+        print(is_bookmarked)
+        return jsonify({'status': 'success', 'message': 'removed from bookmarks'}), 200
+    else:
+        bookmark = Bookmark(user_id=user_id, tweet_id=tweet_id)
+        db.session.add(bookmark)
+        db.session.commit()
+        print(is_bookmarked)
+        return jsonify({'status': 'success', 'message': 'added to bookmarks'}), 200
       
 @app.route('/api/create_group', methods=['POST'])
 def create_group():
