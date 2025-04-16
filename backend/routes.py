@@ -399,6 +399,8 @@ def tweet_data(tweet_id):
         view_count = View.query.filter_by(tweet_id=tweet_id).count()
 
         is_liked = Like.query.filter_by(user_id=current_user_id, tweet_id=tweet_id).first() is not None
+        is_retweeted = Retweet.query.filter_by(user_id=current_user_id, tweet_id=tweet_id).first() is not None
+        is_bookmarked = Bookmark.query.filter_by(user_id=current_user_id, tweet_id=tweet_id).first() is not None
 
         data = {
             'tweet_id': tweet_id,
@@ -415,7 +417,9 @@ def tweet_data(tweet_id):
             'status': 'success',
             'message': 'Tweet data fetched successfully',
             'data': data,
-            'is_liked': is_liked
+            'is_liked': is_liked,
+            'is_retweeted': is_retweeted,
+            'is_bookmarked': is_bookmarked
         })
     
     except Exception as e:

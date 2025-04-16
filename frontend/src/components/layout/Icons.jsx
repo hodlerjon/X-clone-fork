@@ -56,6 +56,7 @@ const Icons = ({ tweetId }) => {
 					})
 					setIsLiked(result.is_liked || false) // 💡 здесь result.is_liked, не result.data.is_liked
 					setIsRetweeted(result.is_retweeted || false) // если есть такая логика
+					setBoookmarked(result.is_bookmarked || false) // если есть такая логика
 				} else {
 					throw new Error(result.message || 'Failed to fetch tweet data')
 				}
@@ -194,7 +195,7 @@ const Icons = ({ tweetId }) => {
 					<div className='p-2 rounded-full group-hover:bg-blue-500/20 transition-colors'>
 						<MessageCircle className='w-5 h-5' />
 					</div>
-					<span>{tweetData.reply_count}</span>
+					<span>{tweetData.reply_count === 0 ? ' ' : tweetData.reply_count}</span>
 				</div>
 
 				{/* Retweets */}
@@ -213,7 +214,7 @@ const Icons = ({ tweetId }) => {
 					>
 						<Repeat className='w-5 h-5' />
 					</div>
-					<span>{tweetData.retweet_count}</span>
+					<span>{tweetData.retweet_count === 0 ? ' ' : tweetData.retweet_count}</span>
 				</div>
 
 				{/* Likes */}
@@ -234,7 +235,7 @@ const Icons = ({ tweetId }) => {
 							}`}
 						/>
 					</div>
-					<span>{tweetData.like_count}</span>
+					<span>{tweetData.like_count === 0 ? ' ' : tweetData.like_count}</span>
 				</div>
 
 				{/* Views */}
@@ -242,7 +243,7 @@ const Icons = ({ tweetId }) => {
 					<div className='p-2 rounded-full group-hover:bg-blue-500/20 transition-colors'>
 						<ChartNoAxesColumn className='w-5 h-5' />
 					</div>
-					<span>{tweetData.view_count}</span>
+					<span>{tweetData.view_count === 0 ? ' ' : tweetData.view_count}</span>
 				</div>
 			</div>
 
