@@ -1,7 +1,7 @@
 import React from 'react'
 import Icons from '../layout/Icons'
 
-const Post = ({ username, handle, time, content, media, avatar, id}) => {
+const Post = ({ username, handle, time, content, media, avatar, id }) => {
 	return (
 		<div className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'>
 			<div className='flex space-x-4'>
@@ -17,7 +17,7 @@ const Post = ({ username, handle, time, content, media, avatar, id}) => {
 				) : (
 					<div className='w-12 h-12 rounded-full bg-gray-700 flex justify-center items-center'>
 						<span className='font-bold text-xl'>
-							{JSON.parse(localStorage.getItem('user')).full_name.slice(0, 1)}
+							{username.charAt(0).toUpperCase()}
 						</span>
 					</div>
 				)}
