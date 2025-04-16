@@ -670,3 +670,33 @@ def unread_count(user_id):
         (Message.receiver_id == user_id) & (Message.is_read == False)
     ).count()
     return jsonify({'unread_count': unread}), 200
+
+
+@app.route('/api/retweet', methods=['POST'])
+def retweet():
+    try:
+        data = request.json
+        user_id = data.get("user_id")
+        tweet_id = data.get("tweet_id")
+        if not user_id or not tweet_id:
+            return jsonify({'status':'error', 'message':'user_id and tweet_id are required'})
+        
+        retweet = Retweet.query.filter_by(user_id=user_id, tweet_id=tweet_id).first()
+        if retweet:
+            db.session.delete(retweet)
+            db.session.commit()
+            return jsonify({'status':'success', 'message':'retweet removed successfully'})
+        else:
+            user = User.query.filter_by(user_id=user_id).first()
+            if not user:
+                return jsonify({'status':'error', 'message':'user_id is not available'})
+            
+            tweet = Tweet.query.filter_by(id=tweet_id).first()
+            if not tweet:
+                return jsonify({'status':'error', 'message':'tweet_id is not available'})
+            retweet = Retweet(user_id=user_id, tweet_id=tweet_id)
+            db.session.add(retweet)
+            db.session.commit()
+    except:
+        return jsonify({'status':'error', 'message':'something went wrong'})
+    return jsonify({'status':'success', 'message':'retweet successfully'})
