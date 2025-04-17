@@ -1,140 +1,111 @@
-import {
-	Heart,
-	MessageCircle,
-	MoreHorizontal,
-	Repeat2,
-	Settings,
-	Share,
-} from 'lucide-react'
-import React from 'react'
+import { ArrowLeft, Search } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import Post from '../ui/Post'
+
+const SkeletonPost = () => (
+	<div className='p-4 border-b border-gray-800 animate-pulse space-y-2'>
+		<div className='flex gap-3 items-center'>
+			<div className='w-10 h-10 rounded-full bg-gray-700'></div>
+			<div className='flex-1 space-y-2'>
+				<div className='h-4 w-1/4 bg-gray-700 rounded'></div>
+				<div className='h-3 w-1/2 bg-gray-700 rounded'></div>
+			</div>
+		</div>
+		<div className='h-4 bg-gray-700 rounded w-4/5 mt-3'></div>
+		<div className='h-4 bg-gray-700 rounded w-2/3'></div>
+	</div>
+)
 
 const Bookmarks = () => {
-	const bookmarks = [
-		{
-			id: 1,
-			author: {
-				name: 'John Doe',
-				handle: '@johndoe',
-				avatar: '',
-			},
-			content:
-				'Just learned something new about React hooks! 🚀 #reactjs #webdev',
-			timestamp: '2h',
-			stats: {
-				replies: 5,
-				reposts: 12,
-				likes: 28,
-			},
-			image: null,
-		},
-		// Add more bookmarks as needed
-	]
+	const [bookmarks, setBookmarks] = useState([])
+	const [isLoading, setIsLoading] = useState(true)
+
+	const fetchBoookmarks = async () => {
+		const userId = JSON.parse(localStorage.getItem('user'))?.user_id
+
+		try {
+			const response = await fetch(
+				`http://localhost:5000/api/bookmarks?user_id=${userId}`,
+				{ credentials: 'include' }
+			)
+
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`)
+			}
+
+			const result = await response.json()
+
+			if (result.status === 'success' && result.tweet_list) {
+				setBookmarks(result.tweet_list)
+			} else {
+				console.error('Error fetching bookmarks:', result.message)
+			}
+		} catch (error) {
+			console.error('Error fetching bookmarks:', error)
+		} finally {
+			setIsLoading(false)
+		}
+	}
+
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			fetchBoookmarks()
+		}, 500) // ⏳ небольшая задержка для плавности
+
+		return () => clearTimeout(timer)
+	}, [])
 
 	return (
 		<div className='min-h-screen border-x border-gray-800 w-[600px]'>
 			{/* Header */}
-			<div className='sticky top-0 bg-black/80 backdrop-blur-md z-10 px-4 py-2 flex items-center justify-between'>
-				<div>
-					<h2 className='font-bold text-xl'>Bookmarks</h2>
-					<p className='text-gray-500 text-sm'>@ShukrulloQ36672</p>
+			<div className='sticky top-0 bg-black/80 backdrop-blur-md z-10 px-4 py-3 space-y-3 border-b border-gray-800'>
+				<div className='flex items-center gap-2'>
+					<button className='p-2 rounded-full hover:bg-gray-800/50'>
+						<ArrowLeft className='w-5 h-5 text-white' />
+					</button>
+					<h2 className='text-2xl font-bold text-white'>Bookmarks</h2>
 				</div>
-				<button className='p-2 hover:bg-gray-900 rounded-full'>
-					<Settings className='w-5 h-5' />
-				</button>
+
+				{/* Search bar */}
+				<div className='relative w-full'>
+					<Search className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5' />
+					<input
+						type='text'
+						placeholder='Search Bookmarks'
+						className='w-full pl-10 pr-4 py-2 bg-neutral-900 text-white rounded-full border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 transition duration-200'
+					/>
+				</div>
 			</div>
 
-			{/* Bookmarks List */}
-			{bookmarks.length > 0 ? (
-				<div>
+			{/* Content */}
+			{isLoading ? (
+				<div className='animate-fadeIn'>
+					{Array(4)
+						.fill(0)
+						.map((_, idx) => (
+							<SkeletonPost key={idx} />
+						))}
+				</div>
+			) : bookmarks.length > 0 ? (
+				<div className='animate-fadeIn space-y-1'>
 					{bookmarks.map(bookmark => (
-						<div
+						<Post
 							key={bookmark.id}
-							className='p-4 border-b border-gray-800 hover:bg-gray-900/50 cursor-pointer transition-colors'
-						>
-							<div className='flex gap-3'>
-								{/* Author Avatar */}
-								<div className='w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center'>
-									{bookmark.author.avatar ? (
-										<img
-											src={bookmark.author.avatar}
-											alt={bookmark.author.name}
-											className='w-full h-full rounded-full object-cover'
-										/>
-									) : (
-										<span className='text-xl font-bold'>
-											{bookmark.author.name.charAt(0)}
-										</span>
-									)}
-								</div>
-
-								{/* Post Content */}
-								<div className='flex-1'>
-									{/* Author Info */}
-									<div className='flex items-center justify-between'>
-										<div className='flex items-center gap-2'>
-											<span className='font-bold hover:underline'>
-												{bookmark.author.name}
-											</span>
-											<span className='text-gray-500'>
-												{bookmark.author.handle}
-											</span>
-											<span className='text-gray-500'>·</span>
-											<span className='text-gray-500'>
-												{bookmark.timestamp}
-											</span>
-										</div>
-										<button className='p-2 hover:bg-blue-500/20 rounded-full group'>
-											<MoreHorizontal className='w-5 h-5 group-hover:text-blue-500' />
-										</button>
-									</div>
-
-									{/* Post Text */}
-									<p className='mt-2 text-[15px]'>{bookmark.content}</p>
-
-									{/* Post Image */}
-									{bookmark.image && (
-										<img
-											src={bookmark.image}
-											alt='Post content'
-											className='mt-3 rounded-xl border border-gray-800 max-h-[500px] object-cover w-full'
-										/>
-									)}
-
-									{/* Interaction Buttons */}
-									<div className='flex justify-between mt-3 max-w-[425px]'>
-										<button className='group flex items-center gap-1 text-gray-500'>
-											<div className='p-2 rounded-full group-hover:bg-blue-500/20'>
-												<MessageCircle className='w-5 h-5 group-hover:text-blue-500' />
-											</div>
-											<span>{bookmark.stats.replies}</span>
-										</button>
-										<button className='group flex items-center gap-1 text-gray-500'>
-											<div className='p-2 rounded-full group-hover:bg-green-500/20'>
-												<Repeat2 className='w-5 h-5 group-hover:text-green-500' />
-											</div>
-											<span>{bookmark.stats.reposts}</span>
-										</button>
-										<button className='group flex items-center gap-1 text-gray-500'>
-											<div className='p-2 rounded-full group-hover:bg-pink-500/20'>
-												<Heart className='w-5 h-5 group-hover:text-pink-500' />
-											</div>
-											<span>{bookmark.stats.likes}</span>
-										</button>
-										<button className='group flex items-center gap-1 text-gray-500'>
-											<div className='p-2 rounded-full group-hover:bg-blue-500/20'>
-												<Share className='w-5 h-5 group-hover:text-blue-500' />
-											</div>
-										</button>
-									</div>
-								</div>
-							</div>
-						</div>
+							username={bookmark.user.username}
+							handle={bookmark.user.username}
+							time={bookmark.created_at}
+							content={bookmark.text_content}
+							media={bookmark.media_content}
+							avatar={bookmark.profile_image_url}
+							id={bookmark.id}
+						/>
 					))}
 				</div>
 			) : (
-				// Empty State
-				<div className='flex flex-col items-center justify-center p-8 text-center'>
-					<h3 className='text-3xl font-bold mb-2'>Save Posts for later</h3>
+				<div className='flex flex-col items-center justify-center p-8 text-center animate-fadeIn'>
+					<h3 className='text-3xl font-bold mb-2 text-white'>
+						Save Posts for later
+					</h3>
 					<p className='text-gray-500 mb-4'>
 						Don't let the good ones fly away! Bookmark Posts to easily find them
 						again in the future.
