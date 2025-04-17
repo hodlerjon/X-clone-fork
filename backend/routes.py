@@ -452,7 +452,17 @@ def add_to_bookmark():
         db.session.commit()
         print(is_bookmarked)
         return jsonify({'status': 'success', 'message': 'added to bookmarks'}), 200
-      
+@app.route("/api/bookmarks/", methods=['GET'])
+def get_bookmarks():
+    user_id = request.args.get('user_id')
+    user = User.query.filter_by(user_id = user_id).first()
+    if not user:
+        return jsonify({'status':'error', 'message':'user_id not available'})
+    bookmarks = Bookmark.query.filter_by(user_id = user_id).all()
+    if not bookmarks:
+        return jsonify({'status':'error', 'message':'this user has no bookmarks'})
+    tweet_list = [Tweet.query.filter_by(id = i.tweet_id).first().to_json() for i in bookmarks]
+    return jsonify({'status':'success', 'message':'bookmarks data received successfully', 'tweet_list':tweet_list[::-1]})
 @app.route('/api/create_group', methods=['POST'])
 def create_group():
     data = request.get_json()
