@@ -195,7 +195,9 @@ const Icons = ({ tweetId }) => {
 					<div className='p-2 rounded-full group-hover:bg-blue-500/20 transition-colors'>
 						<MessageCircle className='w-5 h-5' />
 					</div>
-					<span>{tweetData.reply_count === 0 ? ' ' : tweetData.reply_count}</span>
+					<span className='min-w-[16px] text-center'>
+						{tweetData.reply_count > 0 ? tweetData.reply_count : ''}
+					</span>
 				</div>
 
 				{/* Retweets */}
@@ -214,7 +216,9 @@ const Icons = ({ tweetId }) => {
 					>
 						<Repeat className='w-5 h-5' />
 					</div>
-					<span>{tweetData.retweet_count === 0 ? ' ' : tweetData.retweet_count}</span>
+					<span className='min-w-[16px] text-center'>
+						{tweetData.retweet_count > 0 ? tweetData.retweet_count : ''}
+					</span>
 				</div>
 
 				{/* Likes */}
@@ -235,7 +239,9 @@ const Icons = ({ tweetId }) => {
 							}`}
 						/>
 					</div>
-					<span>{tweetData.like_count === 0 ? ' ' : tweetData.like_count}</span>
+					<span className='min-w-[16px] text-center'>
+						{tweetData.like_count > 0 ? tweetData.like_count : ''}
+					</span>
 				</div>
 
 				{/* Views */}
@@ -243,7 +249,9 @@ const Icons = ({ tweetId }) => {
 					<div className='p-2 rounded-full group-hover:bg-blue-500/20 transition-colors'>
 						<ChartNoAxesColumn className='w-5 h-5' />
 					</div>
-					<span>{tweetData.view_count === 0 ? ' ' : tweetData.view_count}</span>
+					<span className='min-w-[16px] text-center'>
+						{tweetData.view_count > 0 ? tweetData.view_count : ''}
+					</span>
 				</div>
 			</div>
 
