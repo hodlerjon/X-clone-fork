@@ -704,3 +704,39 @@ def retweet():
     except:
         return jsonify({'status':'error', 'message':'something went wrong'})
     return jsonify({'status':'success', 'message':'retweet successfully'})
+
+
+@app.route('/api/profile/<user_id>', methods=['GET'])
+def get_profile(user_id):
+    try:
+        user = User.query.filter_by(user_id=user_id).first()
+        if not user:
+            return jsonify({'status': 'error', 'message': 'user_id not available'}), 404
+
+        tweets = Tweet.query.filter_by(user_id=user_id).all()
+        data = []
+        for tweet in tweets:
+            data.insert(0, tweet.to_json())
+
+        followers = Follower.query.filter_by(following_id=user_id).all()
+        follower_count = len(followers)
+
+        following = Follower.query.filter_by(follower_id=user_id).all()
+        following_count = len(following)
+
+        return jsonify({
+            'status': 'success',
+            'user': {
+                'user_id': user.user_id,
+                'username': user.username,
+                'email': user.email,
+                'full_name': user.full_name,
+                'bio': user.bio,
+                'profile_image_url': user.profile_image_url,
+                'posts': data,
+                'follower_count': follower_count,
+                'following_count': following_count
+            }
+        }), 200
+    except:
+        return jsonify({'status': 'error', 'message': 'something went wrong'}), 500
