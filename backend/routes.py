@@ -713,7 +713,10 @@ def get_profile(user_id):
         if not user:
             return jsonify({'status': 'error', 'message': 'user_id not available'}), 404
 
-        data = Tweet.query.filter_by(user_id=user_id).all()
+        tweets = Tweet.query.filter_by(user_id=user_id).all()
+        data = []
+        for tweet in tweets:
+            data.insert(0, tweet.to_json())
 
         followers = Follower.query.filter_by(following_id=user_id).all()
         follower_count = len(followers)
