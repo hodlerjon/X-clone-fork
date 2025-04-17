@@ -745,7 +745,8 @@ def get_profile(user_id):
                 'profile_image_url': user.profile_image_url,
                 'posts': data,
                 'follower_count': follower_count,
-                'following_count': following_count
+                'following_count': following_count,
+                'post_count': len(data)
             }
         }), 200
     except:
