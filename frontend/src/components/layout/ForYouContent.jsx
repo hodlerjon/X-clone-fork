@@ -3,7 +3,13 @@ import Post from '../ui/Post'
 import PostInput from '../ui/PostInput'
 import Spinner from '../ui/Spinner'
 
-const ForYouContent = ({ posts, loading, error, onPostCreated }) => {
+const ForYouContent = ({
+	posts,
+	loading,
+	error,
+	onPostCreated,
+	onPostDeleted,
+}) => {
 	if (error) return <div className='text-red-500 p-4 text-center'>{error}</div>
 
 	return (
@@ -25,6 +31,7 @@ const ForYouContent = ({ posts, loading, error, onPostCreated }) => {
 						content={post.text_content}
 						media={post.media_content}
 						avatar={post?.user?.profile_image_url}
+						onPostDeleted={onPostDeleted}
 					/>
 				))}
 			</div>

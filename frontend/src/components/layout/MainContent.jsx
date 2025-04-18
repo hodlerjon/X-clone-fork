@@ -1,7 +1,13 @@
 import React, { useState } from 'react'
 import FollowingContent from './FollowContent'
 import ForYouContent from './ForYouContent'
-const MainContent = ({ posts, loading, error, onPostCreated }) => {
+const MainContent = ({
+	posts,
+	loading,
+	error,
+	onPostCreated,
+	onPostDeleted,
+}) => {
 	const [activeTab, setActiveTab] = useState('For you')
 
 	const handleTabClick = tabName => {
@@ -42,6 +48,7 @@ const MainContent = ({ posts, loading, error, onPostCreated }) => {
 						loading={loading}
 						error={error}
 						onPostCreated={onPostCreated}
+						onPostDeleted={onPostDeleted}
 					/>
 				) : (
 					<FollowingContent />

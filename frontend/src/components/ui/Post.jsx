@@ -1,11 +1,61 @@
-import React from 'react'
+import { MoreHorizontal } from 'lucide-react'
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Icons from '../layout/Icons'
+import PostActionModal from '../ui/PostActionModal'
 
-const Post = ({ username, handle, time, content, media, avatar, id }) => {
+const Post = ({
+	username,
+	handle,
+	time,
+	content,
+	media,
+	avatar,
+	id,
+	onPostDeleted,
+}) => {
+	const [isModalOpen, setIsModalOpen] = useState(false)
+	const navigate = useNavigate()
+	// Get current user from localStorage to determine if it's the user's own post
+	const currentUser = JSON.parse(localStorage.getItem('user'))
+	const handleClick = () => {
+		navigate(`/post/${id}`)
+	}
+
+	const isOwnPost = currentUser?.username === handle.split('@')[1]
+
+	const handleDeletePost = async postId => {
+		try {
+			const response = await fetch(
+				`http://localhost:5000/api/tweet/${postId}`,
+				{
+					method: 'DELETE',
+					credentials: 'include',
+				}
+			)
+
+			if (!response.ok) {
+				throw new Error('Failed to delete post')
+			}
+			onPostDeleted(postId)
+			setIsModalOpen(false)
+		} catch (error) {
+			console.error('Error deleting post:', error)
+		}
+	}
+
+	const handleEditPost = postId => {
+		// Implementation for editing would go here
+		console.log('Edit post:', postId)
+		// Could navigate to edit page or open an edit form
+	}
+
 	return (
-		<div className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'>
+		<div
+			className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'
+			onClick={handleClick}
+		>
 			<div className='flex space-x-4'>
-				{/* Avatar section */}
 				<div className='flex-shrink-0'>
 					{avatar ? (
 						<img
@@ -21,24 +71,40 @@ const Post = ({ username, handle, time, content, media, avatar, id }) => {
 						</div>
 					)}
 				</div>
-	
+
 				{/* Content section */}
 				<div className='flex-grow'>
-					{/* Header */}
-					<div className='flex items-center space-x-2'>
-						<span className='font-bold hover:underline'>{username}</span>
-						<span className='text-gray-500'>{handle}</span>
-						<span className='text-gray-500'>·</span>
-						<span className='text-gray-500 text-sm hover:underline'>
-							{time}
-						</span>
+					<div>
+						<div className='flex justify-between'>
+							<div className='flex items-center space-x-2'>
+								<span className='font-bold hover:underline'>{username}</span>
+								<span className='text-gray-500'>{handle}</span>
+								<span className='text-gray-500'>·</span>
+								<span className='text-gray-500 text-sm hover:underline'>
+									{time}
+								</span>
+							</div>
+
+							{/* More options button */}
+							<button
+								onClick={e => {
+									e.stopPropagation() // Prevent triggering parent click events
+									setIsModalOpen(true)
+								}}
+								className='p-1 rounded-full hover:bg-gray-800/50 transition-colors'
+							>
+								<MoreHorizontal className='w-5 h-5 text-gray-500' />
+							</button>
+						</div>
 					</div>
-	
+
 					{/* Tweet content */}
-					<div className="break-words whitespace-pre-wrap max-w-full overflow-hidden text-pretty">
-						<p className='mt-2 text-left text-[15px] leading-normal'>{content}</p>
+					<div className='break-words whitespace-pre-wrap max-w-full overflow-hidden text-pretty'>
+						<p className='mt-2 text-left text-[15px] leading-normal'>
+							{content}
+						</p>
 					</div>
-	
+
 					{/* Media */}
 					{media && (
 						<div className='mt-3'>
@@ -55,16 +121,25 @@ const Post = ({ username, handle, time, content, media, avatar, id }) => {
 							/>
 						</div>
 					)}
-	
+
 					{/* Interaction icons */}
 					<div className='mt-3'>
 						<Icons tweetId={id} />
 					</div>
 				</div>
 			</div>
+
+			{/* Post Action Modal */}
+			<PostActionModal
+				isOpen={isModalOpen}
+				onClose={() => setIsModalOpen(false)}
+				postId={id}
+				isOwnPost={isOwnPost}
+				onDelete={handleDeletePost}
+				onEdit={handleEditPost}
+			/>
 		</div>
 	)
-	
 }
 
 export default Post

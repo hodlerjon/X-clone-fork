@@ -18,7 +18,7 @@ import Notifications from './components/pages/Notifications'
 import Profile from './components/pages/Profile'
 import Register from './components/pages/Register'
 import XHomepage from './components/pages/Xhomepage'
-
+import PostCommentPage from './components/pages/Commnets/Commnetspage'
 export const BASE_URL =
 	import.meta.env.MODE === 'development' ? 'http://127.0.0.1:5000/api' : '/api'
 function App() {
@@ -71,6 +71,9 @@ function AppContent() {
 		if (newPost && newPost.id) {
 			setPosts(prev => [newPost, ...prev])
 		}
+	}
+	const handleDeletePost = async deletedPostId => {
+		setPosts(prev => prev.filter(post => post.id !== deletedPostId))
 	}
 
 	useEffect(() => {
@@ -137,9 +140,20 @@ function AppContent() {
 										<XHomepage
 											posts={posts}
 											onPostCreated={handleNewPost}
+											onPostDeleted={handleDeletePost}
 											loading={loading}
 											error={error}
 										/>
+									) : (
+										<Navigate to='/register' replace />
+									)
+								}
+							/>
+							<Route
+								path='/post/:postId'
+								element={
+									isAuthenticated ? (
+										<PostCommentPage />
 									) : (
 										<Navigate to='/register' replace />
 									)
