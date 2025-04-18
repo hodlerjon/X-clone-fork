@@ -389,24 +389,58 @@ def tweet_replies(tweet_id):
 #     except:
 #         return jsonify({'status':'error', 'message':'Something went wrong'})
 
-@app.route("/api/replies/<user_id>", methods = ["GET"])
+@app.route("/api/replies/<user_id>", methods=["GET"])
 def get_user_replies(user_id):
-    return jsonify({
-        "status": "success",
-        "replies": [
-            {
-                "id": "string",
-                "text_content": "string",
-                "media_content": "string",
-                "created_at": "string",
-                "user": {
-                    "username": "string",
-                    "profile_image_url": None
-                }
-            }
-        ]
-    })
+    try:
+        user = User.query.filter_by(user_id=user_id).first()
+        if not user:
+            return jsonify({'status': 'error', 'message': 'user_id not available'})
 
+        replies = Reply.query.filter_by(user_id=user_id).all()
+        if not replies:
+            return jsonify({
+                'status': 'success',
+                'replies': []
+            })
+
+        replies_data = []
+        for reply in replies:
+            tweet = Tweet.query.filter_by(id=reply.tweet_id).first()
+            tweeted_user = User.query.filter_by(user_id=tweet.user_id).first()
+            if tweet:
+                reply_data = {
+                    'id': reply.id,
+                    'text_content': reply.text_content,
+                    'media_content': reply.media_content,
+                    'created_at': reply.replied_at,
+                    'user': {
+                        'username': user.username,
+                        'profile_image_url': user.profile_image_url
+                    },
+                    'original_tweet': {
+                        'id': tweet.id,
+                        'text_content': tweet.text_content,
+                        'media_content': tweet.media_content,
+                        'created_at': tweet.created_at,
+                        'user': {
+                            'username': tweeted_user.username,
+                            'profile_image_url': tweeted_user.profile_image_url
+                        }
+                    }
+                }
+                replies_data.append(reply_data)
+
+        return jsonify({
+            'status': 'success',
+            'replies': replies_data
+        })
+
+    except Exception as e:
+        print(f"Error in get_user_replies: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': 'Something went wrong'
+        }), 500
 
 
 # tweetning barcha ma'lumotlarini olish + replylar, retweetlar, likelar
