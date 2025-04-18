@@ -219,12 +219,11 @@ def get_user_tweets(user_id):
     if not tweets:
         return jsonify({'status': 'error', 'message': 'no tweets found'})
 
-    return jsonify([{
-        'id': tweet.id,
-        'user_id': tweet.user_id,
-        'text_content': tweet.text_content,
-        'media_content': tweet.media_content
-    } for tweet in tweets])
+    return jsonify({
+        'status': 'success',
+        'message': 'tweets received successfully',
+        "tweets": [tweet.to_json() for tweet in tweets[::-1]]
+    })
 
 # like tweet
 @app.route("/api/likes", methods = ["POST"])
@@ -267,7 +266,7 @@ def get_liked_tweets(user_id):
     liked_tweets = Like.query.filter_by(user_id=user_id).all()
     liked_tweets_list = []
     for like in liked_tweets:
-        liked_tweets_list.append(like.to_json())
+        liked_tweets_list.append(Tweet.query.filter_by(id=like.tweet_id).first().to_json())
     return jsonify({'status':'success', 'liked_tweets':liked_tweets_list})
 
 # Barcha tweetlarni olish

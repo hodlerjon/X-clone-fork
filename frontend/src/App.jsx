@@ -147,7 +147,7 @@ function AppContent() {
 							/>
 
 							<Route
-								path='/profile/:user_id?'  // Make user_id optional
+								path='/profile/*' // Make user_id optional
 								element={
 									isAuthenticated ? (
 										<Profile />
