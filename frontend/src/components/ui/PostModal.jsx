@@ -10,20 +10,21 @@ const PostModal = ({ isOpen, onClose, onPostCreated }) => {
 	const fileInputRef = useRef(null)
 	const MAX_CHARS = 280
 
-	const getUserFromStorage = () => {
-		const user = localStorage.getItem('user')
-		try {
-			return user ? JSON.parse(user).user_id : null
-		} catch (error) {
-			console.error('Error parsing user:', error)
-			return null
-		}
-	}
+	// const getUserFromStorage = () => {
+	// 	const user = localStorage.getItem('user')
+	// 	try {
+	// 		return user ? JSON.parse(user).user_id : null
+	// 	} catch (error) {
+	// 		console.error('Error parsing user:', error)
+	// 		return null
+	// 	}
+	// }
+	const user_id = JSON.parse(localStorage.getItem('user')).user_id
 
 	const [postData, setPostData] = useState({
 		content: '',
 		selectedImage: null,
-		user_id: getUserFromStorage(),
+		user_id: user_id,
 	})
 
 	useEffect(() => {
@@ -69,6 +70,7 @@ const PostModal = ({ isOpen, onClose, onPostCreated }) => {
 		}))
 		setShowEmojiPicker(false)
 	}
+	console.log(postData.user_id)
 
 	const handleSubmit = async e => {
 		e.preventDefault()

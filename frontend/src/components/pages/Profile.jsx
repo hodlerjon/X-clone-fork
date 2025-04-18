@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Camera, X } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import {
 	Link,
@@ -19,6 +19,11 @@ const fadeIn = {
 
 const tabContentVariants = {
 	hidden: { opacity: 0 },
+	visible: { opacity: 1, transition: { duration: 0.4 } },
+}
+
+const modalVariants = {
+	hidden: { opacity: 0 },
 	visible: { opacity: 1, transition: { duration: 0.2 } },
 }
 
@@ -30,6 +35,13 @@ const Profile = () => {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 	const [activeTab, setActiveTab] = useState(0)
+	const [isTabContentLoading, setIsTabContentLoading] = useState(false)
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+	const [formData, setFormData] = useState({
+		name: '',
+		bio: '',
+		location: '',
+	})
 
 	const tabs = [
 		{ name: 'Posts', path: '' },
@@ -43,15 +55,26 @@ const Profile = () => {
 			navigate('/profile/')
 		}
 
-		// Set active tab based on current path
+		// Set active tab based on current path and add smooth transition
 		const path = location.pathname.split('/').pop()
+		console.log(path)
+
 		const tabIndex = tabs.findIndex(
 			tab =>
 				(tab.path === '' && (path === 'profile' || path === '')) ||
 				path === tab.path
 		)
-		if (tabIndex >= 0) setActiveTab(tabIndex)
-	}, [location, navigate, tabs])
+
+		if (tabIndex >= 0 && tabIndex !== activeTab) {
+			setIsTabContentLoading(true)
+			setActiveTab(tabIndex)
+
+			// Add timeout for smooth tab transition
+			setTimeout(() => {
+				setIsTabContentLoading(false)
+			}, 300)
+		}
+	}, [location, navigate, tabs, activeTab])
 
 	useEffect(() => {
 		const fetchProfile = async () => {
@@ -73,6 +96,11 @@ const Profile = () => {
 				const data = await response.json()
 				if (data.status === 'success') {
 					setUserData(data.user)
+					setFormData({
+						name: data.user.full_name || '',
+						bio: data.user.bio || '',
+						location: data.user.location || '',
+					})
 				} else {
 					throw new Error(data.message || 'Failed to fetch profile')
 				}
@@ -87,6 +115,35 @@ const Profile = () => {
 		fetchProfile()
 	}, [user_id])
 
+	const handleEditProfile = () => {
+		setIsEditModalOpen(true)
+	}
+
+	const handleCloseModal = () => {
+		setIsEditModalOpen(false)
+	}
+
+	const handleInputChange = e => {
+		const { name, value } = e.target
+		setFormData({
+			...formData,
+			[name]: value,
+		})
+	}
+
+	const handleSaveProfile = async () => {
+		// Here you would implement the API call to update the profile
+		console.log('Saving profile with data:', formData)
+		// Update local userData to reflect changes immediately
+		setUserData({
+			...userData,
+			full_name: formData.name,
+			bio: formData.bio,
+			location: formData.location,
+		})
+		setIsEditModalOpen(false)
+	}
+
 	if (loading || error || !userData) {
 		const message = error
 			? error
@@ -96,7 +153,7 @@ const Profile = () => {
 		const color = error ? 'text-red-500' : 'text-gray-500'
 
 		return (
-			<div className='min-h-screen flex items-center justify-center bg-black border-x border-gray-800 w-full max-w-2xl mx-auto'>
+			<div className='min-h-screen flex items-center justify-center bg-black border-x border-gray-800 w-[600px] mx-auto'>
 				<p className={`${color} text-lg`}>{message}</p>
 			</div>
 		)
@@ -107,16 +164,19 @@ const Profile = () => {
 			initial='hidden'
 			animate='visible'
 			variants={fadeIn}
-			className='min-h-screen border-x border-gray-800 w-[600px] max-w-2xl mx-auto bg-black'
+			className='min-h-screen border-x border-gray-800 w-[600px] mx-auto bg-black relative'
 		>
 			{/* Header */}
 			<div className='sticky top-0 bg-black/80 backdrop-blur-md z-10 px-4 py-3 flex items-center border-b border-gray-800'>
-				<Link to='/' className='p-2 hover:bg-gray-800 rounded-full mr-6'>
+				<Link
+					to='/'
+					className='p-2 rounded-full mr-6 hover:bg-gray-800 transition-colors'
+				>
 					<ArrowLeft className='w-5 h-5 text-white' />
 				</Link>
 				<div>
 					<h2 className='font-bold text-xl text-white'>{userData.full_name}</h2>
-					<p className='text-gray-500 text-sm'>
+					<p className='text-gray-500 text-sm text-left'>
 						{userData.post_count || 0} posts
 					</p>
 				</div>
@@ -125,94 +185,104 @@ const Profile = () => {
 			{/* Banner */}
 			<div className='h-32 bg-gradient-to-br from-gray-800 to-gray-700'></div>
 
-			<div>
-				{/* Avatar + Edit Button */}
-				<div className='px-4 pb-3 flex justify-between items-start relative'>
-					<div className='absolute -top-12'>
-						<div className='w-24 h-24 rounded-full border-4 border-black bg-gray-700 overflow-hidden flex justify-center items-center'>
-							{userData.profile_image_url ? (
-								<img
-									src={userData.profile_image_url}
-									alt='Avatar'
-									className='w-full h-full object-cover'
-								/>
-							) : (
-								<span className='font-bold text-4xl text-gray-300'>
-									{userData.full_name?.charAt(0).toUpperCase()}
-								</span>
-							)}
-						</div>
-					</div>
-					<div className='ml-auto mt-2'>
-						<button className='px-4 py-1.5 rounded-full border border-gray-600 font-semibold text-sm hover:bg-gray-900 transition'>
-							Edit profile
-						</button>
-					</div>
-				</div>
-
-				{/* Info */}
-				<div className='px-4 mt-6 mb-4 text-white'>
-					<h2 className='font-bold text-xl text-left'>{userData.full_name}</h2>
-					<p className='text-gray-500 text-left'>@{userData.username}</p>
-
-					{userData.verified && (
-						<div className='flex items-center gap-1 mt-2'>
-							<span className='bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full'>
-								✓ Verified
+			{/* Avatar + Edit Button */}
+			<div className='px-4 pb-3 flex justify-between items-start relative'>
+				<div className='absolute -top-12'>
+					<div className='w-24 h-24 rounded-full border-4 border-black bg-gray-700 overflow-hidden flex justify-center items-center'>
+						{userData.profile_image_url ? (
+							<img
+								src={userData.profile_image_url}
+								alt='Avatar'
+								className='w-full h-full object-cover'
+							/>
+						) : (
+							<span className='font-bold text-4xl text-gray-300'>
+								{userData.full_name?.charAt(0).toUpperCase()}
 							</span>
-						</div>
-					)}
-
-					{userData.bio && (
-						<p className='mt-3 text-left text-gray-300'>{userData.bio}</p>
-					)}
-
-					<div className='flex gap-4 mt-3 text-sm text-gray-400'>
-						<span className='hover:underline cursor-pointer'>
-							<strong className='text-white'>
-								{userData.following_count || 0}
-							</strong>{' '}
-							Following
-						</span>
-						<span className='hover:underline cursor-pointer'>
-							<strong className='text-white'>
-								{userData.follower_count || 0}
-							</strong>{' '}
-							Followers
-						</span>
+						)}
 					</div>
+				</div>
+				<div className='ml-auto mt-2'>
+					<button
+						className='px-4 py-1.5 rounded-full border border-gray-600 font-semibold text-sm text-white hover:bg-gray-900 transition-colors'
+						onClick={handleEditProfile}
+					>
+						Edit profile
+					</button>
+				</div>
+			</div>
 
-					<p className='mt-3 text-gray-500 text-sm'>
-						Joined {userData.join_date || 'December 2024'}
+			{/* Info */}
+			<div className='px-4 mt-6 mb-4 text-white'>
+				<h2 className='font-bold text-xl text-left'>{userData.full_name}</h2>
+				<p className='text-gray-500 text-left'>@{userData.username}</p>
+
+				{userData.bio && (
+					<p className='mt-3 text-left text-gray-300'>{userData.bio}</p>
+				)}
+
+				{userData.location && (
+					<p className='mt-2 text-left text-gray-500'>
+						<span className='mr-1'>📍</span>
+						{userData.location}
 					</p>
+				)}
+
+				<div className='flex gap-4 mt-3 text-sm text-gray-400'>
+					<span className='hover:underline cursor-pointer transition-colors'>
+						<strong className='text-white'>
+							{userData.following_count || 0}
+						</strong>{' '}
+						Following
+					</span>
+					<span className='hover:underline cursor-pointer transition-colors'>
+						<strong className='text-white'>
+							{userData.follower_count || 0}
+						</strong>{' '}
+						Followers
+					</span>
 				</div>
 
-				{/* Tabs */}
-				<div className='flex border-b border-gray-800 sticky top-14 bg-black/80 backdrop-blur-md z-10'>
-					{tabs.map((tab, index) => (
-						<NavLink
-							key={tab.name}
-							to={`/profile${tab.path ? `/${tab.path}` : ''}`}
-							end={tab.path === ''}
-							className={({ isActive }) => `
-                flex-1 py-4 text-center font-medium text-[15px]
-                cursor-pointer transition-colors hover:bg-gray-900/50
-                border-b-4 ${
-									isActive ? 'border-blue-500' : 'border-transparent'
-								}
-              `}
-						>
-							{tab.name}
-						</NavLink>
-					))}
-				</div>
+				<p className='mt-3 text-gray-500 text-sm'>
+					Joined {userData.join_date || 'December 2024'}
+				</p>
+			</div>
 
-				{/* Tab Content */}
+			{/* Tabs */}
+			<div className='flex border-b border-gray-800 sticky top-14 bg-black/80 backdrop-blur-md z-10'>
+				{tabs.map((tab, index) => (
+					<NavLink
+						key={tab.name}
+						to={`/profile${tab.path ? `/${tab.path}` : ''}`}
+						end={tab.path === ''}
+						className={({ isActive }) => `
+              w-[150px] py-3 text-center font-medium text-sm
+              cursor-pointer transition-colors hover:bg-gray-900/50
+              border-b-4 ${
+								isActive ||
+								(tab.path === '' && location.pathname === '/profile')
+									? 'border-blue-500 text-white'
+									: 'border-transparent text-gray-400 hover:text-gray-300'
+							}
+            `}
+					>
+						{tab.name}
+					</NavLink>
+				))}
+			</div>
+
+			{/* Tab Content */}
+			{isTabContentLoading ? (
+				<div className='p-8 flex justify-center'>
+					<p className='text-gray-500'>Loading content...</p>
+				</div>
+			) : (
 				<motion.div
 					key={location.pathname}
 					initial='hidden'
 					animate='visible'
 					variants={tabContentVariants}
+					className='divide-y divide-gray-800'
 				>
 					<Routes>
 						<Route index element={<Posts />} />
@@ -221,15 +291,124 @@ const Profile = () => {
 						<Route path='likes' element={<Likes />} />
 					</Routes>
 				</motion.div>
-			</div>
+			)}
+
+			{/* Edit Profile Modal */}
+			{isEditModalOpen && (
+				<div className='fixed inset-0 bg-black/70 flex items-center justify-center z-50'>
+					<motion.div
+						initial='hidden'
+						animate='visible'
+						variants={modalVariants}
+						className='bg-black w-[600px] rounded-2xl border border-gray-800 shadow-xl'
+					>
+						<div className='flex items-center justify-between p-4 border-b border-gray-800'>
+							<div className='flex items-center gap-8'>
+								<button
+									onClick={handleCloseModal}
+									className='p-2 rounded-full hover:bg-gray-800 transition-colors'
+								>
+									<X className='w-5 h-5 text-white' />
+								</button>
+								<h2 className='text-xl font-bold text-white'>Edit profile</h2>
+							</div>
+							<button
+								onClick={handleSaveProfile}
+								className='px-4 py-1.5 bg-white text-black rounded-full font-bold text-sm hover:bg-gray-200 transition-colors'
+							>
+								Save
+							</button>
+						</div>
+
+						<div className='relative'>
+							{/* Banner */}
+							<div className='h-48 bg-gradient-to-br from-gray-800 to-gray-700 relative'>
+								<div className='absolute inset-0 flex items-center justify-center'>
+									<button className='p-3 bg-black/50 rounded-full hover:bg-black/70 transition-colors'>
+										<Camera className='w-6 h-6 text-white' />
+									</button>
+								</div>
+							</div>
+
+							{/* Avatar */}
+							<div className='absolute left-4 -bottom-12'>
+								<div className='w-24 h-24 rounded-full border-4 border-black bg-gray-700 overflow-hidden flex justify-center items-center relative'>
+									{userData.profile_image_url ? (
+										<img
+											src={userData.profile_image_url}
+											alt='Avatar'
+											className='w-full h-full object-cover'
+										/>
+									) : (
+										<span className='font-bold text-4xl text-gray-300'>
+											{userData.full_name?.charAt(0).toUpperCase()}
+										</span>
+									)}
+									<div className='absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity'>
+										<Camera className='w-6 h-6 text-white' />
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div className='p-4 mt-16 space-y-4'>
+							{/* Name Input */}
+							<div className='rounded-md border border-gray-700 bg-black overflow-hidden focus-within:border-blue-500 transition-colors'>
+								<label className='block px-3 pt-2 text-xs text-gray-500'>
+									Name
+								</label>
+								<input
+									type='text'
+									name='name'
+									value={formData.name}
+									onChange={handleInputChange}
+									maxLength={50}
+									className='w-full px-3 pb-2 bg-transparent text-white text-lg focus:outline-none'
+								/>
+							</div>
+
+							{/* Bio Input */}
+							<div className='rounded-md border border-gray-700 bg-black overflow-hidden focus-within:border-blue-500 transition-colors'>
+								<label className='block px-3 pt-2 text-xs text-gray-500'>
+									Bio
+								</label>
+								<textarea
+									name='bio'
+									value={formData.bio}
+									onChange={handleInputChange}
+									maxLength={160}
+									className='w-full px-3 pb-2 bg-transparent text-white resize-none h-20 focus:outline-none'
+								/>
+							</div>
+
+							{/* Location Input */}
+							<div className='rounded-md border border-gray-700 bg-black overflow-hidden focus-within:border-blue-500 transition-colors'>
+								<label className='block px-3 pt-2 text-xs text-gray-500'>
+									Location
+								</label>
+								<input
+									type='text'
+									name='location'
+									value={formData.location}
+									onChange={handleInputChange}
+									maxLength={30}
+									className='w-full px-3 pb-2 bg-transparent text-white focus:outline-none'
+								/>
+							</div>
+						</div>
+					</motion.div>
+				</div>
+			)}
 		</motion.div>
 	)
 }
 
 const EmptyState = ({ message }) => (
-	<div className='flex flex-col items-center justify-center py-16 text-gray-500'>
-		<p className='text-xl font-medium'>{message}</p>
-		<p className='text-sm mt-1'>When they post, you'll see them here</p>
+	<div className='flex flex-col items-center justify-center py-16 px-4 text-center'>
+		<p className='text-xl font-medium text-gray-500'>{message}</p>
+		<p className='text-sm mt-2 text-gray-600'>
+			When they post, you'll see them here
+		</p>
 	</div>
 )
 
@@ -276,9 +455,11 @@ const Posts = () => {
 	}, [user_id])
 
 	return (
-		<div className='px-4 py-3'>
-			{loading && <p className='text-gray-500'>Loading posts...</p>}
-			{error && <p className='text-red-500'>{error}</p>}
+		<div className='divide-y divide-gray-800'>
+			{loading && (
+				<p className='text-gray-500 p-4 text-center'>Loading posts...</p>
+			)}
+			{error && <p className='text-red-500 p-4 text-center'>{error}</p>}
 			{!loading && !error && posts.length === 0 && (
 				<EmptyState message='No posts yet' />
 			)}
@@ -350,14 +531,16 @@ const Likes = () => {
 	}, [user_id])
 
 	return (
-		<div className='px-4 py-3'>
-			{loading && <p className='text-gray-500'>Loading likes...</p>}
-			{error && <p className='text-red-500'>{error}</p>}
+		<div className='divide-y divide-gray-800'>
+			{loading && (
+				<p className='text-gray-500 p-4 text-center'>Loading likes...</p>
+			)}
+			{error && <p className='text-red-500 p-4 text-center'>{error}</p>}
 			{!loading && !error && likes.length === 0 && (
 				<EmptyState message='No likes yet' />
 			)}
 			{!loading && !error && likes.length > 0 && (
-				<div className='space-y-4'>
+				<div>
 					{likes.map(like => (
 						<Post
 							key={like.id}

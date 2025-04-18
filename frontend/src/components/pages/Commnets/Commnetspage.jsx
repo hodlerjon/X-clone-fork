@@ -27,13 +27,13 @@ const PostCommentPage = ({ postId }) => {
 	}
 
 	return (
-		<div className='max-w-2xl mx-auto border-x border-gray-700 min-h-screen bg-black text-white'>
+		<div className='max-w-2xl mx-auto border-x border-gray-700 min-h-screen w-[600px] bg-black text-white'>
 			{/* Header */}
 			<div className='sticky top-0 z-10 bg-black bg-opacity-70 backdrop-blur-sm p-4 border-b border-gray-700 flex items-center'>
 				<Link to='/' className='mr-6 rounded-full p-2 hover:bg-gray-800'>
 					<FiArrowLeft className='text-lg' />
 				</Link>
-				<h1 className='font-bold text-xl'>Post</h1>
+				<p className='font-bold text-xl'>Post</p>
 			</div>
 
 			{/* Main Post */}
