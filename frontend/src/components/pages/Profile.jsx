@@ -483,7 +483,100 @@ const Posts = () => {
 	)
 }
 
-const Replies = () => <EmptyState message='No replies yet' />
+
+const Replies = () => {
+    const [replies, setReplies] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
+    const user_id = JSON.parse(localStorage.getItem('user'))?.user_id
+
+    useEffect(() => {
+        const fetchReplies = async () => {
+            try {
+                if (!user_id) throw new Error('No user ID available')
+
+                const resp = await fetch(
+                    `http://localhost:5000/api/replies/${user_id}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'include'
+                    }
+                )
+
+                if (!resp.ok) {
+                    throw new Error('Failed to fetch replies')
+                }
+
+                const data = await resp.json()
+                if (data.status === 'success') {
+                    setReplies(data.replies || [])
+                } else {
+                    throw new Error(data.message || 'Failed to fetch replies')
+                }
+            } catch (err) {
+                console.error('Error fetching replies:', err)
+                setError('Failed to fetch replies')
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchReplies()
+    }, [user_id])
+
+    return (
+        <div className='divide-y divide-gray-800'>
+            {loading && (
+                <p className='text-gray-500 p-4 text-center'>Loading replies...</p>
+            )}
+            {error && <p className='text-red-500 p-4 text-center'>{error}</p>}
+            {!loading && !error && replies.length === 0 && (
+                <EmptyState message='No replies yet' />
+            )}
+            {!loading && !error && replies.length > 0 && (
+                <div>
+                    {replies.map(reply => (
+                        <div key={reply.id} className="border-b border-gray-800">
+                            {/* Original Tweet */}
+                            <Post
+                                key={`original-${reply.original_tweet.id}`}
+                                id={reply.original_tweet.id}
+                                username={reply.original_tweet.user.username}
+                                handle={`@${reply.original_tweet.user.username}`}
+                                time={reply.original_tweet.created_at}
+                                content={reply.original_tweet.text_content}
+                                media={reply.original_tweet.media_content}
+                                avatar={reply.original_tweet.user.profile_image_url}
+                            />
+
+                            {/* Reply */}
+                            <div className="pl-8 border-l border-gray-800 ml-6">
+                                <div className="flex items-center space-x-2 px-4 py-2 text-gray-500">
+                                    <span>Replying to @{reply.original_tweet.user.username}</span>
+                                </div>
+                                <Post
+                                    key={`reply-${reply.id}`}
+                                    id={reply.id}
+                                    username={reply.user.username}
+                                    handle={`@${reply.user.username}`}
+                                    time={reply.created_at}
+                                    content={reply.text_content}
+                                    media={reply.media_content}
+                                    avatar={reply.user.profile_image_url}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    )
+}
+
 
 const Media = () => <EmptyState message='No media yet' />
 
