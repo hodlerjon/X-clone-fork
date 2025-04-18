@@ -266,7 +266,7 @@ def get_liked_tweets(user_id):
     liked_tweets = Like.query.filter_by(user_id=user_id).all()
     liked_tweets_list = []
     for like in liked_tweets:
-        liked_tweets_list.append(Tweet.query.filter_by(id=like.tweet_id).first().to_json())
+        liked_tweets_list.insert(0, Tweet.query.filter_by(id=like.tweet_id).first().to_json())
     return jsonify({'status':'success', 'liked_tweets':liked_tweets_list})
 
 # Barcha tweetlarni olish
@@ -369,6 +369,43 @@ def tweet_replies(tweet_id):
             return jsonify({'status':'error', 'message':'this post has no replies'})
     except:
         return jsonify({'status':'error', 'message':'Something went wrong'})
+
+
+# @app.route("/api/replies/<user_id>", methods = ["GET"])
+# def get_user_replies(user_id):
+#     try:
+#         user = User.query.filter_by(user_id = user_id).first()
+#         if not user:
+#             return jsonify({'status':'error', 'message':'user_id is not available'})
+#         replies = Reply.query.filter_by(user_id = user_id).all()
+#         data = []
+#         for i in replies:
+#             data.append({'user_id':i.user_id, 'tweet_id':i.tweet_id, 'text_content':i.text_content})
+#         if replies:
+#             return jsonify({'status':'success', 'message':'replies data reseived succesfully', 'data':data})
+#         else:
+#             return jsonify({'status':'error', 'message':'this user has no replies'})
+#     except:
+#         return jsonify({'status':'error', 'message':'Something went wrong'})
+
+@app.route("/api/replies/<user_id>", methods = ["GET"])
+def get_user_replies(user_id):
+    return jsonify({
+        "status": "success",
+        "replies": [
+            {
+                "id": "string",
+                "text_content": "string",
+                "media_content": "string",
+                "created_at": "string",
+                "user": {
+                    "username": "string",
+                    "profile_image_url": None
+                }
+            }
+        ]
+    })
+
 
 
 # tweetning barcha ma'lumotlarini olish + replylar, retweetlar, likelar
