@@ -6,10 +6,11 @@ import os
 
 app = Flask(__name__)
 CORS(app,
-     supports_credentials=True,
-     origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-     expose_headers=["Content-Type", "Authorization"],
-     allow_headers=["Content-Type", "Authorization"]
+     resources={r"/api/*": {
+         "origins": ["http://localhost:5173", "http://127.0.0.1:5173"],
+         "expose_headers": ["Content-Type", "Authorization"],
+         "allow_headers": ["Content-Type", "Authorization"]
+     }}
 )
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
@@ -46,6 +47,11 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Импорт маршрутов после создания сокета и моделей
 from routes import *
+@app.after_request
+def add_security_headers(response):
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
+    return response
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5050, debug=True)

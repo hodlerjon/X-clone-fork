@@ -6,14 +6,14 @@ import { HiOutlineGif } from 'react-icons/hi2'
 import { IoCloseOutline } from 'react-icons/io5'
 
 const getUserFromStorage = () => {
-  try {
-    const userStr = localStorage.getItem('user')
-    if (!userStr) return null
-    const parsed = JSON.parse(userStr)
-    return parsed?.user_id || null
-  } catch {
-    return null
-  }
+	try {
+		const userStr = localStorage.getItem('user')
+		if (!userStr) return null
+		const parsed = JSON.parse(userStr)
+		return parsed?.user_id || null
+	} catch {
+		return null
+	}
 }
 
 const PostInput = ({ onPostSuccess }) => {
@@ -185,7 +185,7 @@ const PostInput = ({ onPostSuccess }) => {
 							<button
 								onClick={removeImage}
 								className='absolute top-2 right-2 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors'
-								aria-label="Remove image"
+								aria-label='Remove image'
 							>
 								<IoCloseOutline size={20} />
 							</button>

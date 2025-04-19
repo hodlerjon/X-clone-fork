@@ -51,10 +51,7 @@ const Post = ({
 	}
 
 	return (
-		<div
-			className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'
-			onClick={handleClick}
-		>
+		<div className='border-b border-gray-800 p-4 hover:bg-gray-900/5 transition-colors cursor-pointer'>
 			<div className='flex space-x-4'>
 				<div className='flex-shrink-0'>
 					{avatar ? (

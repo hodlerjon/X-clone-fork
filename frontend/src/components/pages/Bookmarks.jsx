@@ -19,7 +19,8 @@ const SkeletonPost = () => (
 const Bookmarks = () => {
 	const [bookmarks, setBookmarks] = useState([])
 	const [isLoading, setIsLoading] = useState(true)
-
+	const [searchQuery, setSearchQuery] = useState('')
+	const [filteredBookmarks, setFilteredBookmarks] = useState([])
 	const fetchBoookmarks = async () => {
 		const userId = JSON.parse(localStorage.getItem('user'))?.user_id
 
@@ -37,6 +38,7 @@ const Bookmarks = () => {
 
 			if (result.status === 'success' && result.tweet_list) {
 				setBookmarks(result.tweet_list)
+				setFilteredBookmarks(result.tweet_list)
 			} else {
 				console.error('Error fetching bookmarks:', result.message)
 			}
@@ -55,6 +57,19 @@ const Bookmarks = () => {
 		return () => clearTimeout(timer)
 	}, [])
 
+	const handleSearchChange = event => {
+		const query = event.target.value.toLowerCase()
+		setSearchQuery(query)
+		if (query.trim() === '') {
+			setFilteredBookmarks(bookmarks)
+		} else {
+			const filtered = bookmarks.filter(bookmark =>
+				bookmark.text_content.toLowerCase().includes(query)
+			)
+			setFilteredBookmarks(filtered)
+		}
+	}
+
 	return (
 		<div className='min-h-screen border-x border-gray-800 w-[600px]'>
 			{/* Header */}
@@ -72,6 +87,8 @@ const Bookmarks = () => {
 					<input
 						type='text'
 						placeholder='Search Bookmarks'
+						value={searchQuery}
+						onChange={handleSearchChange}
 						className='w-full pl-10 pr-4 py-2 bg-neutral-900 text-white rounded-full border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 transition duration-200'
 					/>
 				</div>
@@ -88,7 +105,7 @@ const Bookmarks = () => {
 				</div>
 			) : bookmarks.length > 0 ? (
 				<div className='animate-fadeIn space-y-1'>
-					{bookmarks.map(bookmark => (
+					{filteredBookmarks.map(bookmark => (
 						<Post
 							key={bookmark.id}
 							username={bookmark.user.username}

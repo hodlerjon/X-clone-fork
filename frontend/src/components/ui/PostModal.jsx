@@ -19,7 +19,8 @@ const PostModal = ({ isOpen, onClose, onPostCreated }) => {
 	// 		return null
 	// 	}
 	// }
-	const user_id = JSON.parse(localStorage.getItem('user')).user_id
+	const user = JSON.parse(localStorage.getItem('user'))
+	const user_id = user ? user.user_id : null
 
 	const [postData, setPostData] = useState({
 		content: '',
