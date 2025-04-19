@@ -20,7 +20,6 @@ const PostCommentPage = ({ postId }) => {
 	const handleSubmitComment = e => {
 		e.preventDefault()
 		if (commentText.trim()) {
-			// Add comment logic here
 			console.log('Comment submitted:', commentText)
 			setCommentText('')
 		}
