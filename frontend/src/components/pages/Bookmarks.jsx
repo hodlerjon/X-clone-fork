@@ -1,5 +1,6 @@
 import { ArrowLeft, Search } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Post from '../ui/Post'
 
 const SkeletonPost = () => (
@@ -69,15 +70,21 @@ const Bookmarks = () => {
 			setFilteredBookmarks(filtered)
 		}
 	}
+	const handleBookmarkToggle = (tweetId, isNowBookmarked) => {
+		if (!isNowBookmarked) {
+			setBookmarks(prev => prev.filter(post => post.id !== tweetId))
+		}
+	}
 
 	return (
 		<div className='min-h-screen border-x border-gray-800 w-[600px]'>
 			{/* Header */}
 			<div className='sticky top-0 bg-black/80 backdrop-blur-md z-10 px-4 py-3 space-y-3 border-b border-gray-800'>
 				<div className='flex items-center gap-2'>
-					<button className='p-2 rounded-full hover:bg-gray-800/50'>
+					<Link to={'/'} className='p-2 rounded-full hover:bg-gray-800/50'>
 						<ArrowLeft className='w-5 h-5 text-white' />
-					</button>
+					</Link>
+
 					<h2 className='text-2xl font-bold text-white'>Bookmarks</h2>
 				</div>
 
@@ -113,8 +120,9 @@ const Bookmarks = () => {
 							time={bookmark.created_at}
 							content={bookmark.text_content}
 							media={bookmark.media_content}
-							avatar={bookmark.profile_image_url}
+							avatar={bookmark.user.profile_image_url}
 							id={bookmark.id}
+							onBookmarkToggle={handleBookmarkToggle}
 						/>
 					))}
 				</div>

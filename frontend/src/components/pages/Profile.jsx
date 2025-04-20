@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { ArrowLeft, Camera, X } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
 	Link,
 	NavLink,
@@ -40,8 +40,11 @@ const Profile = () => {
 	const [formData, setFormData] = useState({
 		name: '',
 		bio: '',
-		location: '',
 	})
+	const [avatarPreview, setAvatarPreview] = useState(null)
+	const [bannerPreview, setBannerPreview] = useState(null)
+	const avatarInputRef = useRef(null)
+	const bannerInputRef = useRef(null)
 
 	const tabs = [
 		{ name: 'Posts', path: '' },
@@ -55,10 +58,7 @@ const Profile = () => {
 			navigate('/profile/')
 		}
 
-		// Set active tab based on current path and add smooth transition
 		const path = location.pathname.split('/').pop()
-		console.log(path)
-
 		const tabIndex = tabs.findIndex(
 			tab =>
 				(tab.path === '' && (path === 'profile' || path === '')) ||
@@ -68,8 +68,6 @@ const Profile = () => {
 		if (tabIndex >= 0 && tabIndex !== activeTab) {
 			setIsTabContentLoading(true)
 			setActiveTab(tabIndex)
-
-			// Add timeout for smooth tab transition
 			setTimeout(() => {
 				setIsTabContentLoading(false)
 			}, 300)
@@ -99,7 +97,6 @@ const Profile = () => {
 					setFormData({
 						name: data.user.full_name || '',
 						bio: data.user.bio || '',
-						location: data.user.location || '',
 					})
 				} else {
 					throw new Error(data.message || 'Failed to fetch profile')
@@ -121,6 +118,8 @@ const Profile = () => {
 
 	const handleCloseModal = () => {
 		setIsEditModalOpen(false)
+		setAvatarPreview(null)
+		setBannerPreview(null)
 	}
 
 	const handleInputChange = e => {
@@ -131,17 +130,117 @@ const Profile = () => {
 		})
 	}
 
+	const handleAvatarClick = () => {
+		avatarInputRef.current.click()
+	}
+
+	const handleBannerClick = () => {
+		bannerInputRef.current.click()
+	}
+
+	const handleAvatarChange = async e => {
+		const file = e.target.files[0]
+		if (!file) return
+
+		// Validate file type and size
+		const validTypes = ['image/jpeg', 'image/png', 'image/gif']
+		if (!validTypes.includes(file.type)) {
+			alert('Please upload a JPEG, PNG, or GIF image.')
+			return
+		}
+		if (file.size > 5 * 1024 * 1024) {
+			alert('Image size must be less than 5MB.')
+			return
+		}
+
+		// Set preview
+		const reader = new FileReader()
+		reader.onloadend = () => {
+			setAvatarPreview(reader.result)
+		}
+		reader.readAsDataURL(file)
+	}
+
+	const handleBannerChange = async e => {
+		const file = e.target.files[0]
+		if (!file) return
+
+		// Validate file type and size
+		const validTypes = ['image/jpeg', 'image/png', 'image/gif']
+		if (!validTypes.includes(file.type)) {
+			alert('Please upload a JPEG, PNG, or GIF image.')
+			return
+		}
+		if (file.size > 10 * 1024 * 1024) {
+			alert('Image size must be less than 10MB.')
+			return
+		}
+
+		// Set preview
+		const reader = new FileReader()
+		reader.onloadend = () => {
+			setBannerPreview(reader.result)
+		}
+		reader.readAsDataURL(file)
+	}
+
 	const handleSaveProfile = async () => {
-		// Here you would implement the API call to update the profile
-		console.log('Saving profile with data:', formData)
-		// Update local userData to reflect changes immediately
-		setUserData({
-			...userData,
-			full_name: formData.name,
-			bio: formData.bio,
-			location: formData.location,
-		})
-		setIsEditModalOpen(false)
+		try {
+			const targetUserId = JSON.parse(localStorage.getItem('user'))?.user_id
+			if (!targetUserId) throw new Error('No user ID available')
+
+			// Update profile data
+			const profileFormData = new FormData()
+			profileFormData.append('full_name', formData.name)
+			profileFormData.append('bio', formData.bio)
+
+			if (avatarInputRef.current.files[0]) {
+				profileFormData.append(
+					'profile_image_url',
+					avatarInputRef.current.files[0]
+				)
+			}
+			if (bannerInputRef.current.files[0]) {
+				profileFormData.append(
+					'banner_image_url',
+					bannerInputRef.current.files[0]
+				)
+			}
+			for (let pair of profileFormData.entries()) {
+				console.log(pair[0] + ': ' + pair[1])
+			}
+			const response = await fetch(
+				`http://localhost:5000/api/edit/profile/${targetUserId}`,
+				{
+					method: 'PUT',
+					credentials: 'include',
+					body: profileFormData,
+				}
+			)
+			const data = await response.json()
+			console.log(data)
+			if (!response.ok) throw new Error('Failed to update profile')
+
+			if (data.status === 'success') {
+				setUserData({
+					...userData,
+					full_name: formData.name,
+					bio: formData.bio,
+					profile_image_url:
+						data.user.profile_image_url || userData.profile_image_url,
+					banner_image_url:
+						data.user.banner_image_url || userData.banner_image_url,
+				})
+				setIsEditModalOpen(false)
+				setAvatarPreview(null)
+				setBannerPreview(null)
+			} else {
+				throw new Error(data.message || 'Failed to update profile')
+			}
+		} catch (err) {
+			console.error('Profile update error:', err)
+			alert('Failed to update profile: ' + err.message)
+		}
 	}
 
 	if (loading || error || !userData) {
@@ -183,15 +282,25 @@ const Profile = () => {
 			</div>
 
 			{/* Banner */}
-			<div className='h-32 bg-gradient-to-br from-gray-800 to-gray-700'></div>
+			<div className='h-32'>
+				{userData.banner_image_url || bannerPreview ? (
+					<img
+						src={bannerPreview || userData.banner_image_url}
+						alt='Banner'
+						className='w-full h-full object-cover'
+					/>
+				) : (
+					<div className='h-full bg-gradient-to-br from-gray-800 to-gray-700'></div>
+				)}
+			</div>
 
 			{/* Avatar + Edit Button */}
 			<div className='px-4 pb-3 flex justify-between items-start relative'>
 				<div className='absolute -top-12'>
 					<div className='w-24 h-24 rounded-full border-4 border-black bg-gray-700 overflow-hidden flex justify-center items-center'>
-						{userData.profile_image_url ? (
+						{avatarPreview || userData.profile_image_url ? (
 							<img
-								src={userData.profile_image_url}
+								src={avatarPreview || userData.profile_image_url}
 								alt='Avatar'
 								className='w-full h-full object-cover'
 							/>
@@ -242,10 +351,6 @@ const Profile = () => {
 						Followers
 					</span>
 				</div>
-
-				<p className='mt-3 text-gray-500 text-sm'>
-					Joined {userData.join_date || 'December 2024'}
-				</p>
 			</div>
 
 			{/* Tabs */}
@@ -322,20 +427,40 @@ const Profile = () => {
 
 						<div className='relative'>
 							{/* Banner */}
-							<div className='h-48 bg-gradient-to-br from-gray-800 to-gray-700 relative'>
-								<div className='absolute inset-0 flex items-center justify-center'>
-									<button className='p-3 bg-black/50 rounded-full hover:bg-black/70 transition-colors'>
-										<Camera className='w-6 h-6 text-white' />
-									</button>
+							<div
+								className='h-48 relative cursor-pointer'
+								onClick={handleBannerClick}
+							>
+								{bannerPreview || userData.banner_image_url ? (
+									<img
+										src={bannerPreview || userData.banner_image_url}
+										alt='Banner'
+										className='w-full h-full object-cover'
+									/>
+								) : (
+									<div className='h-full bg-gradient-to-br from-gray-800 to-gray-700'></div>
+								)}
+								<div className='absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity'>
+									<Camera className='w-6 h-6 text-white' />
 								</div>
 							</div>
+							<input
+								type='file'
+								accept='image/jpeg,image/png,image/gif'
+								ref={bannerInputRef}
+								onChange={handleBannerChange}
+								className='hidden'
+							/>
 
 							{/* Avatar */}
-							<div className='absolute left-4 -bottom-12'>
+							<div
+								className='absolute left-4 -bottom-12 cursor-pointer'
+								onClick={handleAvatarClick}
+							>
 								<div className='w-24 h-24 rounded-full border-4 border-black bg-gray-700 overflow-hidden flex justify-center items-center relative'>
-									{userData.profile_image_url ? (
+									{avatarPreview || userData.profile_image_url ? (
 										<img
-											src={userData.profile_image_url}
+											src={avatarPreview || userData.profile_image_url}
 											alt='Avatar'
 											className='w-full h-full object-cover'
 										/>
@@ -349,6 +474,13 @@ const Profile = () => {
 									</div>
 								</div>
 							</div>
+							<input
+								type='file'
+								accept='image/jpeg,image/png,image/gif'
+								ref={avatarInputRef}
+								onChange={handleAvatarChange}
+								className='hidden'
+							/>
 						</div>
 
 						<div className='p-4 mt-16 space-y-4'>
@@ -382,19 +514,6 @@ const Profile = () => {
 							</div>
 
 							{/* Location Input */}
-							<div className='rounded-md border border-gray-700 bg-black overflow-hidden focus-within:border-blue-500 transition-colors'>
-								<label className='block px-3 pt-2 text-xs text-gray-500'>
-									Location
-								</label>
-								<input
-									type='text'
-									name='location'
-									value={formData.location}
-									onChange={handleInputChange}
-									maxLength={30}
-									className='w-full px-3 pb-2 bg-transparent text-white focus:outline-none'
-								/>
-							</div>
 						</div>
 					</motion.div>
 				</div>
@@ -459,10 +578,7 @@ const Posts = () => {
 			{loading && (
 				<p className='text-gray-500 p-4 text-center'>Loading posts...</p>
 			)}
-			{error && <p className='text-red-500 p-4 text-center'>{error}</p>}
-			{!loading && !error && posts.length === 0 && (
-				<EmptyState message='No posts yet' />
-			)}
+			{posts.length === 0 && <EmptyState message='No posts yet' />}
 			{!loading && !error && posts.length > 0 && (
 				<div>
 					{posts.map(post => (
@@ -483,100 +599,98 @@ const Posts = () => {
 	)
 }
 
-
 const Replies = () => {
-    const [replies, setReplies] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState(null)
-    const user_id = JSON.parse(localStorage.getItem('user'))?.user_id
+	const [replies, setReplies] = useState([])
+	const [loading, setLoading] = useState(true)
+	const [error, setError] = useState(null)
+	const user_id = JSON.parse(localStorage.getItem('user'))?.user_id
 
-    useEffect(() => {
-        const fetchReplies = async () => {
-            try {
-                if (!user_id) throw new Error('No user ID available')
+	useEffect(() => {
+		const fetchReplies = async () => {
+			try {
+				if (!user_id) throw new Error('No user ID available')
 
-                const resp = await fetch(
-                    `http://localhost:5000/api/replies/${user_id}`,
-                    {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        credentials: 'include'
-                    }
-                )
+				const resp = await fetch(
+					`http://localhost:5000/api/replies/${user_id}`,
+					{
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json',
+							Accept: 'application/json',
+						},
+						credentials: 'include',
+					}
+				)
 
-                if (!resp.ok) {
-                    throw new Error('Failed to fetch replies')
-                }
+				if (!resp.ok) {
+					throw new Error('Failed to fetch replies')
+				}
 
-                const data = await resp.json()
-                if (data.status === 'success') {
-                    setReplies(data.replies || [])
-                } else {
-                    throw new Error(data.message || 'Failed to fetch replies')
-                }
-            } catch (err) {
-                console.error('Error fetching replies:', err)
-                setError('Failed to fetch replies')
-            } finally {
-                setLoading(false)
-            }
-        }
+				const data = await resp.json()
+				if (data.status === 'success') {
+					setReplies(data.replies || [])
+				} else {
+					throw new Error(data.message || 'Failed to fetch replies')
+				}
+			} catch (err) {
+				console.error('Error fetching replies:', err)
+				setError('Failed to fetch replies')
+			} finally {
+				setLoading(false)
+			}
+		}
 
-        fetchReplies()
-    }, [user_id])
+		fetchReplies()
+	}, [user_id])
 
-    return (
-        <div className='divide-y divide-gray-800'>
-            {loading && (
-                <p className='text-gray-500 p-4 text-center'>Loading replies...</p>
-            )}
-            {error && <p className='text-red-500 p-4 text-center'>{error}</p>}
-            {!loading && !error && replies.length === 0 && (
-                <EmptyState message='No replies yet' />
-            )}
-            {!loading && !error && replies.length > 0 && (
-                <div>
-                    {replies.map(reply => (
-                        <div key={reply.id} className="border-b border-gray-800">
-                            {/* Original Tweet */}
-                            <Post
-                                key={`original-${reply.original_tweet.id}`}
-                                id={reply.original_tweet.id}
-                                username={reply.original_tweet.user.username}
-                                handle={`@${reply.original_tweet.user.username}`}
-                                time={reply.original_tweet.created_at}
-                                content={reply.original_tweet.text_content}
-                                media={reply.original_tweet.media_content}
-                                avatar={reply.original_tweet.user.profile_image_url}
-                            />
+	return (
+		<div className='divide-y divide-gray-800'>
+			{loading && (
+				<p className='text-gray-500 p-4 text-center'>Loading replies...</p>
+			)}
+			{error && <p className='text-red-500 p-4 text-center'>{error}</p>}
+			{!loading && !error && replies.length === 0 && (
+				<EmptyState message='No replies yet' />
+			)}
+			{!loading && !error && replies.length > 0 && (
+				<div>
+					{replies.map(reply => (
+						<div key={reply.id} className='border-b border-gray-800'>
+							{/* Original Tweet */}
+							<Post
+								key={`original-${reply.original_tweet.id}`}
+								id={reply.original_tweet.id}
+								username={reply.original_tweet.user.username}
+								handle={`@${reply.original_tweet.user.username}`}
+								time={reply.original_tweet.created_at}
+								content={reply.original_tweet.text_content}
+								media={reply.original_tweet.media_content}
+								avatar={reply.original_tweet.user.profile_image_url}
+							/>
 
-                            {/* Reply */}
-                            <div className="pl-8 border-l border-gray-800 ml-6">
-                                <div className="flex items-center space-x-2 px-4 py-2 text-gray-500">
-                                    <span>Replying to @{reply.original_tweet.user.username}</span>
-                                </div>
-                                <Post
-                                    key={`reply-${reply.id}`}
-                                    id={reply.id}
-                                    username={reply.user.username}
-                                    handle={`@${reply.user.username}`}
-                                    time={reply.created_at}
-                                    content={reply.text_content}
-                                    media={reply.media_content}
-                                    avatar={reply.user.profile_image_url}
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-        </div>
-    )
+							{/* Reply */}
+							<div className='pl-8 border-l border-gray-800 ml-6'>
+								<div className='flex items-center space-x-2 px-4 py-2 text-gray-500'>
+									<span>Replying to @{reply.original_tweet.user.username}</span>
+								</div>
+								<Post
+									key={`reply-${reply.id}`}
+									id={reply.id}
+									username={reply.user.username}
+									handle={`@${reply.user.username}`}
+									time={reply.created_at}
+									content={reply.text_content}
+									media={reply.media_content}
+									avatar={reply.user.profile_image_url}
+								/>
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	)
 }
-
 
 const Media = () => <EmptyState message='No media yet' />
 
@@ -585,7 +699,11 @@ const Likes = () => {
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState(null)
 	const user_id = JSON.parse(localStorage.getItem('user'))?.user_id
-
+	const handleLikeToggle = (postId, isNowLiked) => {
+		if (!isNowLiked) {
+			setLikes(prev => prev.filter(post => post.id !== postId))
+		}
+	}
 	useEffect(() => {
 		const fetchLikes = async () => {
 			try {
@@ -644,6 +762,7 @@ const Likes = () => {
 							avatar={like.user.profile_image_url}
 							media={like.media_content}
 							id={like.id}
+							onLikeToggle={handleLikeToggle}
 						/>
 					))}
 				</div>

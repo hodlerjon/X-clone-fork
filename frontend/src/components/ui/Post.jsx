@@ -12,7 +12,8 @@ const Post = ({
 	media,
 	avatar,
 	id,
-	onPostDeleted,
+	onBookmarkToggle,
+	onLikeToggle,
 }) => {
 	const [isModalOpen, setIsModalOpen] = useState(false)
 	const navigate = useNavigate()
@@ -121,7 +122,11 @@ const Post = ({
 
 					{/* Interaction icons */}
 					<div className='mt-3'>
-						<Icons tweetId={id} />
+						<Icons
+							tweetId={id}
+							onBookmarkToggle={onBookmarkToggle}
+							onLikeToggle={onLikeToggle}
+						/>
 					</div>
 				</div>
 			</div>

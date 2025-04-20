@@ -846,3 +846,55 @@ def get_profile(user_id):
         }), 200
     except:
         return jsonify({'status': 'error', 'message': 'something went wrong'}), 500
+@app.route("/api/edit/profile/<user_id>", methods=["PUT"])
+def edit_profile(user_id):
+    full_name = request.form.get("full_name")
+    bio = request.form.get("bio")
+    user = User.query.filter_by(user_id=user_id).first()
+    
+    if not user:
+        return jsonify({"status": "error", "message": "User is not found"})
+    
+    # Обработка загрузки аватара
+    if 'profile_image_url' in request.files:
+        avatar_file = request.files['profile_image_url']
+        if avatar_file and allowed_file(avatar_file.filename):
+            # Создаем безопасное имя файла с временной меткой
+            filename = secure_filename(f"{datetime.now().timestamp()}_avatar_{avatar_file.filename}")
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Сохраняем файл
+            avatar_file.save(file_path)
+            
+            # Генерируем URL для фронтенда
+            user.profile_image_url = f"http://localhost:5000/uploads/{filename}"
+    
+    # Обработка загрузки баннера
+    if 'banner_image_url' in request.files:
+        banner_file = request.files['banner_image_url']
+        if banner_file and allowed_file(banner_file.filename):
+            # Создаем безопасное имя файла с временной меткой
+            filename = secure_filename(f"{datetime.now().timestamp()}_banner_{banner_file.filename}")
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Сохраняем файл
+            banner_file.save(file_path)
+            
+            # Генерируем URL для фронтенда
+            user.banner_image_url = f"http://localhost:5000/uploads/{filename}"
+    
+    # Обновляем текстовые поля
+    user.full_name = full_name
+    user.bio = bio
+    
+    db.session.commit()
+    
+    return jsonify({
+        "status": "success", 
+        "message": "Profile edited successfully", 
+        "user": {
+            "profile_image_url": user.profile_image_url, 
+            "banner_image_url": user.banner_image_url,
+            "full_name": user.full_name
+        }
+    })

@@ -9,7 +9,7 @@ import {
 import PropTypes from 'prop-types'
 import React, { useEffect, useState } from 'react'
 
-const Icons = ({ tweetId }) => {
+const Icons = ({ tweetId, onBookmarkToggle, onLikeToggle }) => {
 	const [tweetData, setTweetData] = useState({
 		like_count: 0,
 		retweet_count: 0,
@@ -18,7 +18,7 @@ const Icons = ({ tweetId }) => {
 	})
 	const [isLiked, setIsLiked] = useState(false)
 	const [isRetweeted, setIsRetweeted] = useState(false)
-	const [isBookmarked, setBoookmarked] = useState(false)
+	const [isBookmarked, setBookmarked] = useState(false)
 	const [isLoading, setIsLoading] = useState(true)
 	const [error, setError] = useState(null)
 
@@ -56,7 +56,7 @@ const Icons = ({ tweetId }) => {
 					})
 					setIsLiked(result.is_liked || false) // 💡 здесь result.is_liked, не result.data.is_liked
 					setIsRetweeted(result.is_retweeted || false) // если есть такая логика
-					setBoookmarked(result.is_bookmarked || false) // если есть такая логика
+					setBookmarked(result.is_bookmarked || false) // если есть такая логика
 				} else {
 					throw new Error(result.message || 'Failed to fetch tweet data')
 				}
@@ -98,7 +98,11 @@ const Icons = ({ tweetId }) => {
 
 			const data = await response.json()
 			if (data.status === 'success') {
-				setIsLiked(!isLiked)
+				const newStatus = !isLiked
+				setIsLiked(newStatus)
+				if (onLikeToggle) {
+					onLikeToggle(tweetId, newStatus)
+				}
 				setTweetData(prev => ({
 					...prev,
 					like_count: isLiked ? prev.like_count - 1 : prev.like_count + 1,
@@ -172,7 +176,12 @@ const Icons = ({ tweetId }) => {
 			}
 			const data = await resp.json()
 			if (data.status === 'success') {
-				setBoookmarked(!isBookmarked)
+				const newStatus = !isBookmarked
+				setBookmarked(newStatus)
+
+				if (onBookmarkToggle) {
+					onBookmarkToggle(tweetId, newStatus)
+				}
 			}
 		} catch (error) {
 			alert('Failed to bookmark. Please try again.')

@@ -12,6 +12,7 @@ class User(db.Model):
     profile_image_url = db.Column(db.Text)
     user_id = db.Column(db.String, primary_key=True, nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=datetime.now)
+    banner_image_url = db.Column(db.Text)
 
     tweets = db.relationship('Tweet', backref='user', cascade='all, delete')
 
